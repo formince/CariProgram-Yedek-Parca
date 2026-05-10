@@ -1,12 +1,26 @@
 using System.Globalization;
 using System.Linq;
 using CariErinc.Data;
+using CariErinc.Helpers;
 using CariErinc.Middleware;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
+// Railway: önce DATABASE_URL (postgres.railway.internal). Yoksa DATABASE_PUBLIC_URL (viaduct proxy).
+var railwayDbUrl = Environment.GetEnvironmentVariable("DATABASE_URL")
+    ?? Environment.GetEnvironmentVariable("DATABASE_PUBLIC_URL");
+var npgsqlFromRailway = PostgresConnectionStringHelper.ToNpgsqlConnectionString(railwayDbUrl);
+if (!string.IsNullOrEmpty(npgsqlFromRailway))
+{
+    if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")))
+        Environment.SetEnvironmentVariable("ConnectionStrings__DefaultConnection", npgsqlFromRailway);
+    if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("ConnectionStrings__AdminConnection")))
+        Environment.SetEnvironmentVariable("ConnectionStrings__AdminConnection", npgsqlFromRailway);
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 

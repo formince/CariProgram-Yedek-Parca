@@ -12,6 +12,11 @@ WORKDIR /src/CariErinc
 RUN dotnet publish "CariErinc.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libkrb5-3 \
+    && rm -rf /var/lib/apt/lists/*
+USER app
 WORKDIR /app
 COPY --from=build /app/publish .
 
