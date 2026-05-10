@@ -9,6 +9,19 @@ using Microsoft.EntityFrameworkCore;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
+// Railway: DATABASE_URL environment variable'ını configuration'a at
+var railwayDbUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (!string.IsNullOrWhiteSpace(railwayDbUrl))
+{
+    // Eğer appsettings'de boş ise, DATABASE_URL'yi kullan
+    var defaultConn = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrWhiteSpace(defaultConn))
+        builder.Configuration["ConnectionStrings:DefaultConnection"] = railwayDbUrl;
+
+    var railwayAdminConn = builder.Configuration.GetConnectionString("AdminConnection");
+    if (string.IsNullOrWhiteSpace(railwayAdminConn))
+        builder.Configuration["ConnectionStrings:AdminConnection"] = railwayDbUrl;
+}
 
 // Services — uygulama DB (isteğe bağlı tenant connection ile factory)
 var adminConnection = builder.Configuration.GetConnectionString("AdminConnection");
