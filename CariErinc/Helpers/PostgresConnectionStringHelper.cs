@@ -6,18 +6,75 @@ public static class PostgresConnectionStringHelper
 {
     /// <summary>
     /// postgresql:// URL veya Host=... connection string — Npgsql'in anladığı anahtar=değer biçimine çevirir.
+    /// Placeholder / bozuk değerlerde false döner (ApplyRailwayDefaults patlamaz).
     /// </summary>
-    public static string? NormalizeForNpgsql(string? connectionStringOrUrl)
+    public static bool TryNormalizeForNpgsql(string? connectionStringOrUrl, out string? normalized)
     {
+        normalized = null;
         if (string.IsNullOrWhiteSpace(connectionStringOrUrl))
-            return null;
+            return false;
 
-        var s = connectionStringOrUrl.Trim().Trim('"');
+        var s = connectionStringOrUrl.Trim().Trim('"').Trim('\uFEFF');
+        if (s.Contains("{PGHOST}", StringComparison.Ordinal)
+            || s.Contains("{PGDATABASE}", StringComparison.Ordinal)
+            || s.Contains("{PGUSER}", StringComparison.Ordinal))
+            return false;
+
         if (s.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)
             || s.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
-            return ToNpgsqlConnectionString(s);
+        {
+            normalized = ToNpgsqlConnectionString(s);
+            return !string.IsNullOrEmpty(normalized);
+        }
 
-        return ApplyRailwayDefaults(s);
+        try
+        {
+            normalized = ApplyRailwayDefaults(s);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Railway'de yalnızca veritabanı adı yazıldıysa (örn. myeo_admin) tam Npgsql string üretir.
+    /// </summary>
+    public static string? MergeDatabaseOntoNpgsqlBase(string? npgsqlBaseConnection, string? databaseName)
+    {
+        if (string.IsNullOrWhiteSpace(npgsqlBaseConnection) || string.IsNullOrWhiteSpace(databaseName))
+            return null;
+        var name = databaseName.Trim().Trim('"');
+        if (name.Contains(';', StringComparison.Ordinal) || name.Contains('=', StringComparison.Ordinal))
+            return null;
+        try
+        {
+            var b = new NpgsqlConnectionStringBuilder(npgsqlBaseConnection) { Database = name };
+            return b.ConnectionString;
+        }
+        catch (ArgumentException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Sadece database adı gibi görünüyor mu (Host=... / URI değil).
+    /// </summary>
+    public static bool LooksLikeDatabaseNameOnly(string? s)
+    {
+        if (string.IsNullOrWhiteSpace(s))
+            return false;
+        var t = s.Trim().Trim('"');
+        if (t.Length is < 1 or > 63)
+            return false;
+        if (t.Contains('=', StringComparison.Ordinal) || t.Contains(';', StringComparison.Ordinal))
+            return false;
+        if (t.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)
+            || t.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+            return false;
+        return true;
     }
 
     /// <summary>

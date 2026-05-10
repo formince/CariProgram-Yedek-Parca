@@ -43,15 +43,28 @@ if (!string.IsNullOrWhiteSpace(connStr) && connStr.Contains("{PGHOST}"))
     builder.Configuration["ConnectionStrings:DefaultConnection"] = connStr;
 }
 
-// AdminConnection / manuel env genelde postgresql:// gelir; Npgsql sadece key=value ister.
+// postgresql:// veya Host=... normalize et; placeholder / ham DB adı ayrıca ele alınır.
 foreach (var connKey in new[] { "DefaultConnection", "AdminConnection" })
 {
     var section = $"ConnectionStrings:{connKey}";
     var raw = builder.Configuration[section];
-    var norm = PostgresConnectionStringHelper.NormalizeForNpgsql(raw);
-    if (!string.IsNullOrEmpty(norm))
+    if (PostgresConnectionStringHelper.TryNormalizeForNpgsql(raw, out var norm) && !string.IsNullOrEmpty(norm))
         builder.Configuration[section] = norm;
 }
+
+var adminRaw = builder.Configuration["ConnectionStrings:AdminConnection"];
+if (!string.IsNullOrEmpty(npgsqlFromRailway)
+    && PostgresConnectionStringHelper.LooksLikeDatabaseNameOnly(adminRaw))
+{
+    var merged = PostgresConnectionStringHelper.MergeDatabaseOntoNpgsqlBase(npgsqlFromRailway, adminRaw);
+    if (!string.IsNullOrEmpty(merged))
+        builder.Configuration["ConnectionStrings:AdminConnection"] = merged;
+}
+
+var defaultRaw = builder.Configuration["ConnectionStrings:DefaultConnection"];
+var defaultOk = PostgresConnectionStringHelper.TryNormalizeForNpgsql(defaultRaw, out _);
+if ((!defaultOk || string.IsNullOrWhiteSpace(defaultRaw)) && !string.IsNullOrEmpty(npgsqlFromRailway))
+    builder.Configuration["ConnectionStrings:DefaultConnection"] = npgsqlFromRailway;
 
 // Services — uygulama DB (isteğe bağlı tenant connection ile factory)
 var adminConnection = builder.Configuration.GetConnectionString("AdminConnection");
