@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-header {
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        /* Custom scrollbar for the Glass Ledger */
+        .glass-ledger::-webkit-scrollbar {
+            width: 6px;
+        }
+        .glass-ledger::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .glass-ledger::-webkit-scrollbar-thumb {
+            background: #e0e3e5;
+            border-radius: 10px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed": "#002114",
+                        "inverse-primary": "#b4c5ff",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#ffecea",
+                        "tertiary": "#ae0010",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container": "#eceef0",
+                        "surface-variant": "#e0e3e5",
+                        "surface": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffdad6",
+                        "inverse-surface": "#2d3133",
+                        "inverse-on-surface": "#eff1f3",
+                        "primary-fixed": "#dbe1ff",
+                        "primary": "#004ac6",
+                        "tertiary-container": "#d52022",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#005137",
+                        "on-primary-fixed": "#00174b",
+                        "surface-container-high": "#e6e8ea",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#85f8c4",
+                        "background": "#f7f9fb",
+                        "secondary": "#006c4a",
+                        "outline-variant": "#c3c6d7",
+                        "secondary-fixed-dim": "#68dba9",
+                        "primary-container": "#2563eb",
+                        "on-surface": "#191c1e",
+                        "on-primary-container": "#eeefff",
+                        "surface-container-highest": "#e0e3e5",
+                        "on-tertiary-fixed": "#410002",
+                        "on-tertiary-fixed-variant": "#93000b",
+                        "surface-container-low": "#f2f4f6",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed-dim": "#ffb4ab",
+                        "outline": "#737686",
+                        "on-secondary-container": "#00714e",
+                        "secondary-container": "#82f5c1",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#434655",
+                        "error": "#ba1a1a",
+                        "surface-dim": "#d8dadc",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-background": "#191c1e",
+                        "surface-tint": "#0053db"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary/10">
+<!-- SideNavBar (Authority Source: JSON) -->
+<aside class="h-screen w-72 flex-col fixed left-0 top-0 hidden lg:flex bg-slate-50 dark:bg-slate-950 p-4 border-r border-slate-200/10 z-50">
+<div class="mb-8 px-2 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+</div>
+<div>
+<h1 class="text-xl font-black text-blue-700 dark:text-blue-500 tracking-tighter">CariErinc</h1>
+<p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Enterprise Ledger</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 flex-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all font-inter text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all font-inter text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="point_of_sale">point_of_sale</span>
+                Satış
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-400 shadow-sm rounded-xl font-inter text-sm font-semibold tracking-wide translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+                Stok
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all font-inter text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+                Cari Yönetim
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all font-inter text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+                Maliye
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all font-inter text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+                Raporlar
+            </a>
+</nav>
+<div class="mt-auto pt-4 flex flex-col gap-2">
+<button class="w-full py-4 bg-gradient-to-r from-primary to-primary-container text-white rounded-xl font-bold shadow-lg shadow-primary/20 flex items-center justify-center gap-2 mb-4 hover:opacity-90 transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+                Hızlı Satış
+            </button>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 text-sm font-medium hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="help">help</span>
+                Destek
+            </a>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 text-sm font-medium hover:text-tertiary transition-colors" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="logout">logout</span>
+                Çıkış
+            </a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="lg:ml-72 min-h-screen">
+<!-- TopNavBar (Authority Source: JSON) -->
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl docked full-width top-0 sticky z-40 shadow-[0px_4px_20px_rgba(0,74,198,0.04)] flex justify-between items-center w-full px-8 py-4">
+<div class="flex items-center gap-8">
+<h2 class="text-2xl font-bold tracking-tighter text-blue-700 dark:text-blue-500 lg:hidden">CariErinc</h2>
+<div class="relative group hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" data-icon="search">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/20 w-80 transition-all outline-none" placeholder="Ürün, barkod veya kategori ara..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-lg transition-all active:opacity-80">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 rounded-lg transition-all active:opacity-80">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-px bg-slate-200 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-bold text-on-surface leading-none">Ahmet Erinc</p>
+<p class="text-[10px] text-slate-500 font-medium">Yönetici</p>
+</div>
+<img alt="User Profile Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm" data-alt="professional portrait of a man in his 40s wearing a clean white shirt, soft natural studio lighting, neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOnVP3muepjfxWrzqKdEipb5tfNBqFuv3YtAwCbduIyoXJxtose7t7yofL0iJnR1Env15Pl9850JRm7EtMkFAtuaru-XuyM9yocz_lQWVJQklOFtzZzAVrbbDRtdGob4T9LZqzph5Wphh4YRrrOaSbjRFDPQy6GjcHLh7aaxBALp8BP21KQSCo8Kgb08Ib_U_q7d2naOkvJXCz0_1UUN7Rq1bGNktl_Qktox3cvTIrTfQtngasR2jY8HKNVhOvcxbG8pPnEb-b-M3j"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-8 max-w-7xl mx-auto space-y-8">
+<!-- Header & Action Row -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<nav class="flex items-center gap-2 text-xs font-medium text-slate-400 mb-2">
+<span>Envanter</span>
+<span class="material-symbols-outlined text-xs" data-icon="chevron_right">chevron_right</span>
+<span class="text-primary">Ürünler Listesi</span>
+</nav>
+<h3 class="text-4xl font-extrabold tracking-tight text-on-surface">Ürünler Listesi</h3>
+<p class="text-slate-500 mt-1">Stok durumunu ve fiyatları anlık olarak yönetin.</p>
+</div>
+<button class="h-14 px-8 bg-gradient-to-r from-primary to-primary-container text-white rounded-xl font-bold shadow-xl shadow-primary/25 flex items-center justify-center gap-3 hover:-translate-y-1 transition-all active:translate-y-0 active:opacity-90">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                    Yeni Ekle
+                </button>
+</div>
+<!-- Filter Card -->
+<div class="bg-surface-container-lowest p-6 rounded-lg shadow-[0px_4px_20px_rgba(0,74,198,0.04)] space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="space-y-2">
+<label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Kategori</label>
+<select class="w-full bg-surface-container-high border-none rounded-DEFAULT h-12 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 appearance-none">
+<option>Tüm Kategoriler</option>
+<option>Elektronik</option>
+<option>Tekstil</option>
+<option>Gıda</option>
+<option>Ofis Gereçleri</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Stok Durumu</label>
+<select class="w-full bg-surface-container-high border-none rounded-DEFAULT h-12 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 appearance-none">
+<option>Tümü</option>
+<option>Kritik Seviye</option>
+<option>Stokta Var</option>
+<option>Tükendi</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Fiyat Aralığı</label>
+<div class="flex items-center gap-2">
+<input class="w-full bg-surface-container-high border-none rounded-DEFAULT h-12 px-4 text-sm focus:ring-2 focus:ring-primary/20" placeholder="Min" type="number"/>
+<span class="text-slate-300">-</span>
+<input class="w-full bg-surface-container-high border-none rounded-DEFAULT h-12 px-4 text-sm focus:ring-2 focus:ring-primary/20" placeholder="Max" type="number"/>
+</div>
+</div>
+<div class="flex items-end">
+<button class="w-full h-12 bg-surface-container-high text-on-surface hover:bg-surface-variant rounded-DEFAULT font-bold transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+                            Filtreleri Uygula
+                        </button>
+</div>
+</div>
+</div>
+<!-- Modern Glass Ledger (Table) -->
+<div class="bg-surface-container-lowest rounded-lg overflow-hidden shadow-sm">
+<div class="overflow-x-auto glass-ledger">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="glass-header sticky top-0 bg-white/90 z-10">
+<th class="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Barkod / Ürün</th>
+<th class="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Kategori</th>
+<th class="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">Alış / Satış Fiyatı</th>
+<th class="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100">KDV</th>
+<th class="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100 text-center">Stok Adedi</th>
+<th class="px-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100 text-right">İşlemler</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<!-- Row 1 -->
+<tr class="group hover:bg-slate-50/80 transition-all">
+<td class="px-6 py-6">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-on-surface">Apple MacBook Pro 14"</span>
+<span class="text-[10px] font-mono text-slate-400 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="barcode">barcode</span>
+                                            8681234567890
+                                        </span>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full text-[11px] font-bold">Elektronik</span>
+</td>
+<td class="px-6 py-6">
+<div class="flex flex-col">
+<div class="text-sm font-bold text-on-surface">₺42.500<span class="text-[10px] text-slate-400 ml-1">,00</span></div>
+<div class="text-xs text-slate-400 font-medium italic">₺38.200<span class="text-[10px]">,00</span> maliyet</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="text-sm font-semibold text-slate-600">%20</span>
+</td>
+<td class="px-6 py-6 text-center">
+<div class="inline-flex items-center justify-center px-4 py-1.5 bg-secondary-container/30 text-secondary font-bold rounded-full text-xs">
+                                        12 Adet
+                                    </div>
+</td>
+<td class="px-6 py-6 text-right">
+<div class="flex items-center justify-end gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+<button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white hover:text-primary hover:shadow-sm transition-all text-slate-500" title="Düzenle">
+<span class="material-symbols-outlined text-xl" data-icon="edit">edit</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white hover:text-primary hover:shadow-sm transition-all text-slate-500" title="Detay">
+<span class="material-symbols-outlined text-xl" data-icon="search">search</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white hover:text-tertiary hover:shadow-sm transition-all text-slate-500" title="Sil">
+<span class="material-symbols-outlined text-xl" data-icon="delete">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-slate-50/80 transition-all">
+<td class="px-6 py-6">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-on-surface">Samsung 27" Curved Monitor</span>
+<span class="text-[10px] font-mono text-slate-400 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="barcode">barcode</span>
+                                            8689876543210
+                                        </span>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full text-[11px] font-bold">Elektronik</span>
+</td>
+<td class="px-6 py-6">
+<div class="flex flex-col">
+<div class="text-sm font-bold text-on-surface">₺4.850<span class="text-[10px] text-slate-400 ml-1">,50</span></div>
+<div class="text-xs text-slate-400 font-medium italic">₺3.900<span class="text-[10px]">,00</span> maliyet</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="text-sm font-semibold text-slate-600">%20</span>
+</td>
+<td class="px-6 py-6 text-center">
+<div class="inline-flex items-center justify-center px-4 py-1.5 bg-tertiary-fixed text-tertiary font-bold rounded-full text-xs">
+                                        2 Adet
+                                    </div>
+</td>
+<td class="px-6 py-6 text-right">
+<div class="flex items-center justify-end gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+<button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white hover:text-primary hover:shadow-sm transition-all text-slate-500">
+<span class="material-symbols-outlined text-xl" data-icon="edit">edit</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white hover:text-primary hover:shadow-sm transition-all text-slate-500">
+<span class="material-symbols-outlined text-xl" data-icon="search">search</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white hover:text-tertiary hover:shadow-sm transition-all text-slate-500">
+<span class="material-symbols-outlined text-xl" data-icon="delete">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-slate-50/80 transition-all">
+<td class="px-6 py-6">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-on-surface">Logitech MX Master 3S</span>
+<span class="text-[10px] font-mono text-slate-400 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="barcode">barcode</span>
+                                            8684455667788
+                                        </span>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full text-[11px] font-bold">Ofis Gereçleri</span>
+</td>
+<td class="px-6 py-6">
+<div class="flex flex-col">
+<div class="text-sm font-bold text-on-surface">₺2.450<span class="text-[10px] text-slate-400 ml-1">,00</span></div>
+<div class="text-xs text-slate-400 font-medium italic">₺1.850<span class="text-[10px]">,00</span> maliyet</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="text-sm font-semibold text-slate-600">%20</span>
+</td>
+<td class="px-6 py-6 text-center">
+<div class="inline-flex items-center justify-center px-4 py-1.5 bg-secondary-container/30 text-secondary font-bold rounded-full text-xs">
+                                        48 Adet
+                                    </div>
+</td>
+<td class="px-6 py-6 text-right">
+<div class="flex items-center justify-end gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+<button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white hover:text-primary hover:shadow-sm transition-all text-slate-500">
+<span class="material-symbols-outlined text-xl" data-icon="edit">edit</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white hover:text-primary hover:shadow-sm transition-all text-slate-500">
+<span class="material-symbols-outlined text-xl" data-icon="search">search</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white hover:text-tertiary hover:shadow-sm transition-all text-slate-500">
+<span class="material-symbols-outlined text-xl" data-icon="delete">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="group hover:bg-slate-50/80 transition-all">
+<td class="px-6 py-6">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-on-surface">Asus ROG Swift OLED</span>
+<span class="text-[10px] font-mono text-slate-400 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="barcode">barcode</span>
+                                            8681122334455
+                                        </span>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant rounded-full text-[11px] font-bold">Elektronik</span>
+</td>
+<td class="px-6 py-6">
+<div class="flex flex-col">
+<div class="text-sm font-bold text-on-surface">₺18.900<span class="text-[10px] text-slate-400 ml-1">,00</span></div>
+<div class="text-xs text-slate-400 font-medium italic">₺14.200<span class="text-[10px]">,00</span> maliyet</div>
+</div>
+</td>
+<td class="px-6 py-6">
+<span class="text-sm font-semibold text-slate-600">%20</span>
+</td>
+<td class="px-6 py-6 text-center">
+<div class="inline-flex items-center justify-center px-4 py-1.5 bg-tertiary/10 text-tertiary font-bold rounded-full text-xs">
+                                        Tükendi
+                                    </div>
+</td>
+<td class="px-6 py-6 text-right">
+<div class="flex items-center justify-end gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+<button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white hover:text-primary hover:shadow-sm transition-all text-slate-500">
+<span class="material-symbols-outlined text-xl" data-icon="edit">edit</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white hover:text-primary hover:shadow-sm transition-all text-slate-500">
+<span class="material-symbols-outlined text-xl" data-icon="search">search</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white hover:text-tertiary hover:shadow-sm transition-all text-slate-500">
+<span class="material-symbols-outlined text-xl" data-icon="delete">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="p-6 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+<p class="text-xs font-semibold text-slate-400">Toplam 142 üründen 1-4 arası gösteriliyor</p>
+<div class="flex items-center gap-1">
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-low text-slate-400 hover:text-primary transition-all">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white font-bold text-sm shadow-md shadow-primary/20">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-surface-container-low text-slate-600 font-bold text-sm transition-all">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-surface-container-low text-slate-600 font-bold text-sm transition-all">3</button>
+<span class="px-2 text-slate-300">...</span>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-surface-container-low text-slate-600 font-bold text-sm transition-all">12</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container-low text-slate-400 hover:text-primary transition-all">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bento Stats Section -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="col-span-1 md:col-span-2 bg-gradient-to-br from-primary to-primary-container rounded-lg p-8 text-white relative overflow-hidden shadow-2xl shadow-primary/30">
+<div class="relative z-10 flex flex-col h-full justify-between">
+<div>
+<h4 class="text-lg font-bold opacity-80">Envanter Değeri</h4>
+<p class="text-5xl font-black mt-2 tracking-tighter">₺1.240.500<span class="text-2xl opacity-60">,00</span></p>
+</div>
+<div class="mt-8 flex items-center gap-4">
+<div class="flex items-center gap-1 px-3 py-1 bg-white/20 rounded-full text-xs font-bold">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+                                %12.5 Artış
+                            </div>
+<span class="text-xs opacity-70 font-medium">Geçen aya göre toplam stok değeri</span>
+</div>
+</div>
+<!-- Decorative background element -->
+<div class="absolute -right-20 -bottom-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+</div>
+<div class="bg-surface-container-lowest rounded-lg p-8 shadow-sm flex flex-col justify-between border-l-4 border-tertiary">
+<div>
+<h4 class="text-sm font-bold text-slate-400 uppercase tracking-widest">Kritik Stok</h4>
+<p class="text-4xl font-black text-on-surface mt-2">08</p>
+</div>
+<div class="mt-4">
+<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full w-[25%] rounded-full"></div>
+</div>
+<p class="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-tight">Kritik seviyenin altındaki ürünler</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual FAB (Authority Source: Mandate) - Suppressed as per Task (Details View usually hides FAB, but List View can keep it if relevant, though we have the primary button at top right) -->
+</body></html>

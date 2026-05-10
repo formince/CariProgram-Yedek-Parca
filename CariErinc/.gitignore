@@ -1,0 +1,37 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+out/
+
+# .NET
+*.dll
+*.exe
+*.pdb
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (varsa)
+node_modules/
+
+# Publish
+publish/
+
+# Rider / VSCode
+.idea/
+.vscode/
+
+# Temp
+*.tmp
+*.temp

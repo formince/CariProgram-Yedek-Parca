@@ -1,0 +1,79 @@
+@model KullaniciYonetimVM
+@{
+    var isEdit = Model.Id > 0;
+    ViewData["Title"] = isEdit ? $"Kullanıcı: {Model.KullaniciAdi}" : "Yeni Kullanıcı";
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-link text-decoration-none mb-2">← Listeye dön</a>
+    <h2>@ViewData["Title"]</h2>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <form asp-action="Save" method="post" style="max-width: 600px;">
+            <input type="hidden" asp-for="Id" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="KullaniciAdi" class="form-label fw-semibold small">Kullanıcı Adı</label>
+                    <input asp-for="KullaniciAdi" class="form-control" placeholder="Giriş adı" />
+                    <span asp-validation-for="KullaniciAdi" class="text-danger small"></span>
+                </div>
+                
+                <div class="col-md-6">
+                    <label asp-for="Sifre" class="form-label fw-semibold small">@(isEdit ? "Şifre (Değiştirmek için doldurun)" : "Şifre")</label>
+                    <input asp-for="Sifre" type="password" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="Sifre" class="text-danger small"></span>
+                    @if (isEdit)
+                    {
+                        <div class="form-text small">Mevcut şifreyi korumak için boş bırakın.</div>
+                    }
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check form-switch p-0 ms-0 mt-2">
+                        <div class="bg-light border rounded p-3 d-flex align-items-center justify-content-between">
+                            <div>
+                                <label class="form-check-label fw-bold mb-0" for="aktifSwitch">Hesap Aktif</label>
+                                <div class="form-text small m-0">Pasif kullanıcılar sisteme giriş yapamaz.</div>
+                            </div>
+                            <input class="form-check-input ms-0 me-1" type="checkbox" asp-for="AktifMi" id="aktifSwitch" style="transform: scale(1.2);">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 mt-4">
+                    <label class="form-label fw-bold">Roller</label>
+                    <div class="border rounded p-3 bg-white">
+                        <div class="row row-cols-1 row-cols-md-3 g-2">
+                            @foreach (var rol in Model.RolListesi)
+                            {
+                                <div class="col">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="SeciliRolIds" value="@rol.Value" 
+                                               id="rol_@rol.Value" @(Model.SeciliRolIds.Contains(int.Parse(rol.Value)) ? "checked" : "")>
+                                        <label class="form-check-label small" for="rol_@rol.Value">
+                                            @rol.Text
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <span asp-validation-for="SeciliRolIds" class="text-danger small"></span>
+                </div>
+            </div>
+            
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary px-4">Kaydet</button>
+                <a asp-action="Index" class="btn btn-outline-secondary px-4">İptal</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScripts" />
+}

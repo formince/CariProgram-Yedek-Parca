@@ -1,0 +1,256 @@
+@model KarZararRaporVM
+@{
+    ViewData["Title"] = "Kâr/Zarar Raporu";
+}
+
+<style>
+    .report-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+    }
+    .report-card:hover {
+        transform: translateY(-2px);
+    }
+    .stat-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    .progress-small {
+        height: 6px;
+        border-radius: 3px;
+        background-color: #f0f0f0;
+    }
+    .table-custom th {
+        background-color: #f8f9fa;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: #6c757d;
+    }
+    @@media print {
+        .no-print { display: none !important; }
+        .card { border: 1px solid #ddd !important; box-shadow: none !important; }
+        .stat-value { font-size: 1.25rem !important; }
+    }
+</style>
+
+<div class="row align-items-center mb-4 no-print">
+    <div class="col-md-6">
+        <h2 class="h3 mb-0">💵 Kâr / Zarar Analizi</h2>
+        <p class="text-muted small mb-0">@Model.BaslangicTarihi.ToLocalTime().ToString("dd MMMM yyyy") - @Model.BitisTarihi.ToLocalTime().ToString("dd MMMM yyyy") arası performans</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">🖨️ Yazdır (PDF)</button>
+    </div>
+</div>
+
+<!-- Filtre Formu -->
+<div class="card mb-4 no-print report-card">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Başlangıç</label>
+                <input type="date" name="baslangic" class="form-control form-control-sm" value="@Model.BaslangicTarihi.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Bitiş</label>
+                <input type="date" name="bitis" class="form-control form-control-sm" value="@Model.BitisTarihi.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-6">
+                <div class="btn-group btn-group-sm">
+                    <a href="?baslangic=@DateTime.Today.AddDays(-7).ToString("yyyy-MM-dd")&bitis=@DateTime.Today.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary">Son 7 Gün</a>
+                    <a href="?baslangic=@(new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).ToString("yyyy-MM-dd"))&bitis=@DateTime.Today.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary">Bu Ay</a>
+                    <a href="?baslangic=@(new DateTime(DateTime.Today.Year, 1, 1).ToString("yyyy-MM-dd"))&bitis=@DateTime.Today.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary">Bu Yıl</a>
+                    <button type="submit" class="btn btn-primary px-4">Filtrele</button>
+                    <a asp-action="KarZararExcel" asp-route-baslangic="@Model.BaslangicTarihi.ToString("yyyy-MM-dd")" asp-route-bitis="@Model.BitisTarihi.ToString("yyyy-MM-dd")" class="btn btn-success">⬇️ Excel</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Ana Kartlar -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card report-card h-100 border-start border-4 border-info">
+            <div class="card-body">
+                <div class="stat-label">Net Satış Tutarı</div>
+                <div class="stat-value text-info">@Model.NetSatisTutari.ToString("N2") ₺</div>
+                <div class="small text-muted mt-2">
+                    <span class="text-secondary">Brüt: @Model.BrutSatisTutari.ToString("N2")</span> | 
+                    <span class="text-danger">İade: -@Model.IadeTutari.ToString("N2")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card report-card h-100 border-start border-4 border-primary">
+            <div class="card-body">
+                <div class="stat-label">Brüt Kâr</div>
+                <div class="stat-value text-primary">@Model.BrutKar.ToString("N2") ₺</div>
+                <div class="small text-muted mt-2">
+                    Maliyet (COGS): <span class="fw-bold">@Model.SatisMaliyeti.ToString("N2") ₺</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card report-card h-100 border-start border-4 @(Model.NetKar >= 0 ? "border-success" : "border-danger")">
+            <div class="card-body">
+                <div class="stat-label">Net @(Model.NetKar >= 0 ? "Kâr" : "Zarar")</div>
+                <div class="stat-value @(Model.NetKar >= 0 ? "text-success" : "text-danger")">@Model.NetKar.ToString("N2") ₺</div>
+                <div class="small text-muted mt-2">
+                    Giderler (Alış Hariç): <span class="fw-bold">@Model.ToplamGider.ToString("N2") ₺</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Sol Kolon: Ürün Performansı -->
+    <div class="col-lg-8">
+        <div class="card report-card mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 mb-0">🏆 En Kârlı 10 Ürün</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ürün Adı</th>
+                            <th class="text-center">Miktar</th>
+                            <th class="text-end">Net Satış</th>
+                            <th class="text-end">Maliyet</th>
+                            <th class="text-end">Kâr</th>
+                            <th class="text-end">Marj%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in Model.EnKarliUrunler)
+                        {
+                            <tr>
+                                <td class="fw-bold">@u.UrunAdi</td>
+                                <td class="text-center">@u.SatilanMiktar</td>
+                                <td class="text-end">@u.SatisTutari.ToString("N2") ₺</td>
+                                <td class="text-end">@u.MaliyetTutari.ToString("N2") ₺</td>
+                                <td class="text-end text-success fw-bold">@u.KarTutari.ToString("N2") ₺</td>
+                                <td class="text-end">
+                                    <span class="badge bg-success-subtle text-success">%@u.KarMarjiYuzdesi.ToString("N1")</span>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.EnKarliUrunler.Any())
+                        {
+                            <tr><td colspan="6" class="text-center py-4 text-muted small">Veri bulunamadı.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card report-card">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 mb-0 text-danger">📉 Kritik Performans / Zarar Edenler</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-custom table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ürün Adı</th>
+                            <th class="text-center">Miktar</th>
+                            <th class="text-end">Net Satış</th>
+                            <th class="text-end">Maliyet</th>
+                            <th class="text-end">Kâr</th>
+                            <th class="text-end">Marj%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in Model.EnAzKarliUrunler)
+                        {
+                            <tr class="@(u.KarTutari < 0 ? "table-danger" : "")">
+                                <td class="fw-bold">@u.UrunAdi</td>
+                                <td class="text-center">@u.SatilanMiktar</td>
+                                <td class="text-end">@u.SatisTutari.ToString("N2") ₺</td>
+                                <td class="text-end">@u.MaliyetTutari.ToString("N2") ₺</td>
+                                <td class="text-end @(u.KarTutari < 0 ? "text-danger" : "") fw-bold">@u.KarTutari.ToString("N2") ₺</td>
+                                <td class="text-end">
+                                    <span class="badge bg-@(u.KarTutari < 0 ? "danger" : "warning")-subtle text-@(u.KarTutari < 0 ? "danger" : "warning")">%@u.KarMarjiYuzdesi.ToString("N1")</span>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.EnAzKarliUrunler.Any())
+                        {
+                            <tr><td colspan="6" class="text-center py-4 text-muted small">Veri bulunamadı.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sağ Kolon: Gider Dağılımı ve Özet -->
+    <div class="col-lg-4">
+        <div class="card report-card mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title h6 mb-0 text-secondary">🏢 Gider Dağılımı</h5>
+            </div>
+            <div class="card-body">
+                @foreach (var g in Model.GiderKategoriler)
+                {
+                    var yuzde = Model.ToplamGider > 0 ? (double)(g.Tutar / Model.ToplamGider * 100) : 0;
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small fw-bold">@g.Kategori</span>
+                            <span class="small text-muted">@g.Tutar.ToString("N2") ₺</span>
+                        </div>
+                        <div class="progress progress-small">
+                            <div class="progress-bar bg-secondary" role="progressbar" style="width: @yuzde.ToString("F0")%"></div>
+                        </div>
+                    </div>
+                }
+                @if (!Model.GiderKategoriler.Any())
+                {
+                    <div class="text-center py-3 text-muted small">Gider kaydı bulunmuyor.</div>
+                }
+                <hr />
+                <div class="d-flex justify-content-between fw-bold mb-0">
+                    <span>Toplam Gider</span>
+                    <span>@Model.ToplamGider.ToString("N2") ₺</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card report-card bg-light border-0">
+            <div class="card-body">
+                <h5 class="h6 mb-3">📋 Finansal Detaylar</h5>
+                <ul class="list-unstyled small mb-0">
+                    <li class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Satış Adedi:</span>
+                        <span class="fw-bold">@Model.SatisSayisi</span>
+                    </li>
+                    <li class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">İade Adedi:</span>
+                        <span class="fw-bold">@Model.IadeSayisi</span>
+                    </li>
+                    <li class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Toplam İndirim Totali:</span>
+                        <span class="fw-bold text-danger">-@Model.IndirimToplam.ToString("N2") ₺</span>
+                    </li>
+                    <li class="d-flex justify-content-between mb-0">
+                        <span class="text-muted">Tahsil Edilen KDV:</span>
+                        <span class="fw-bold">@Model.KdvToplam.ToString("N2") ₺</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

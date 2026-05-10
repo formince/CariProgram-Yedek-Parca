@@ -1,0 +1,73 @@
+@model Alis
+@{
+    ViewData["Title"] = "Alış Detay";
+}
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-link text-decoration-none mb-2">← Alış listesine dön</a>
+    <h2>Alış Detay</h2>
+    @if (Model.AlisOdemeleri != null && Model.AlisOdemeleri.Any())
+    {
+        <p class="text-muted small mb-0">Bu alışa toptancı ödemesi girildiği için düzenleme ve silme kapalıdır.</p>
+    }
+    else
+    {
+        <div class="d-flex flex-wrap gap-2 mt-2">
+            <a asp-action="Form" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">✏️ Düzenle</a>
+            <button type="button" class="btn btn-sm btn-outline-danger btn-delete" 
+                    data-url="@Url.Action("Sil", new { id = Model.Id })"
+                    data-title="Alış Fişini İptal Et"
+                    data-text="Bu alış fişini iptal edeceksiniz. Raftaki stok yeterliyse kayıt silinir ve kasa/borç geri alınır. Devam?">
+                🗑️ Sil
+            </button>
+        </div>
+    }
+</div>
+
+<div class="stat-card border-0 shadow-sm mb-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="text-muted small mb-1">📅 Tarih</div>
+            <div class="fw-bold">@Model.Tarih.ToTrDate()</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small mb-1">📦 Tedarikçi</div>
+            <div class="fw-bold">@(Model.Tedarikci?.Ad ?? "-")</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted small mb-1">📝 Açıklama</div>
+            <div class="fw-bold">@(Model.Aciklama ?? "-")</div>
+        </div>
+    </div>
+</div>
+
+<h5 class="mb-3">Alış Satırları</h5>
+<div class="table-wrapper mb-4">
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Ürün</th>
+                <th class="text-center" style="width: 100px;">Miktar</th>
+                <th class="text-end" style="width: 150px;">Birim Fiyat</th>
+                <th class="text-end" style="width: 150px;">Toplam</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var d in Model.AlisDetaylari)
+            {
+                var satirToplam = d.Miktar * d.BirimFiyat;
+                <tr>
+                    <td class="fw-semibold">@(d.Urun?.Ad ?? "Tanımsız Ürün")</td>
+                    <td class="text-center">@d.Miktar</td>
+                    <td class="text-end">@d.BirimFiyat.ToTrParaMoney()</td>
+                    <td class="text-end fw-bold">@satirToplam.ToTrParaMoney()</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr class="table-light fw-bold text-end">
+                <td colspan="3">Genel Toplam</td>
+                <td class="text-primary h5 mb-0">@Model.ToplamTutar.ToTrParaMoney()</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>

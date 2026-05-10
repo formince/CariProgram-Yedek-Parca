@@ -1,0 +1,157 @@
+@model UrunIndexVM
+@{
+    ViewData["Title"] = "Ürünler";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="row g-4 mb-4 mt-2">
+    <div class="col-md-8">
+        <nav class="d-flex align-items-center gap-2 text-muted mb-2" style="font-size: 0.75rem; font-weight: 500;">
+            <span>Envanter</span>
+            <span class="material-symbols-outlined fs-6">chevron_right</span>
+            <span class="text-primary">Ürünler Listesi</span>
+        </nav>
+        <h2 class="text-on-surface fw-bold tracking-tight mb-1">Ürünler Listesi <span class="badge bg-primary-container text-primary rounded-pill align-text-bottom ms-2 fs-6">@Model.TotalCount</span></h2>
+        <p class="text-muted small">Stok durumunu ve fiyatları anlık olarak yönetin.</p>
+    </div>
+    <div class="col-md-4 text-md-end d-flex align-items-end justify-content-md-end">
+        <a asp-action="Form" class="btn btn-primary btn-lg shadow-lg px-4 py-2 fw-bold d-flex align-items-center gap-2">
+            <span class="material-symbols-outlined">add</span> Yeni Ürün Ekle
+        </a>
+    </div>
+</div>
+
+<div class="card mb-5 border-0 shadow-sm rounded-4">
+    <div class="card-body p-4">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-uppercase tracking-wider text-muted">Arama</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-surface-container border-0 rounded-start-3"><span class="material-symbols-outlined fs-6">search</span></span>
+                    <input type="text" name="arama" value="@Model.Arama" class="form-control border-0 bg-surface-container rounded-end-3" placeholder="Ad veya barkod..." />
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase tracking-wider text-muted">Marka</label>
+                <select name="kategori" asp-items="ViewBag.Kategoriler" class="form-select form-select-sm border-0 bg-surface-container rounded-3">
+                    <option value="">-- Tümü --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase tracking-wider text-muted">Tedarikçi</label>
+                <select name="tedarikciId" asp-items="ViewBag.TedarikciListesi" class="form-select form-select-sm border-0 bg-surface-container rounded-3">
+                    <option value="">-- Tümü --</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase tracking-wider text-muted">Stok Durumu</label>
+                <select name="stokDurumu" class="form-select form-select-sm border-0 bg-surface-container rounded-3">
+                    <option value="" selected="@(string.IsNullOrEmpty(Model.StokDurumu))">Tümü</option>
+                    <option value="Var" selected="@(Model.StokDurumu == "Var")">Stokta Var</option>
+                    <option value="Kritik" selected="@(Model.StokDurumu == "Kritik")">Kritik Seviye</option>
+                    <option value="Yok" selected="@(Model.StokDurumu == "Yok")">Stokta Yok</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm flex-grow-1 rounded-3">Filtrele</button>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-3">Temizle</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Urunler.Any())
+{
+    <div class="table-wrapper mb-4 rounded-4 shadow-sm border-0">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="bg-surface-container-low text-muted font-black text-uppercase tracking-widest" style="font-size: 0.7rem;">
+                <tr>
+                    <th class="ps-4 py-4">Barkod / Ürün</th>
+                    <th class="py-4">Kategori</th>
+                    <th class="py-4">Alış / Satış Fiyatı</th>
+                    <th class="py-4">KDV</th>
+                    <th class="py-4 text-center">Stok</th>
+                    <th class="pe-4 py-4 text-end">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-container">
+                @foreach (var u in Model.Urunler)
+                {
+                    var alisKdvDahil = u.AlisFiyati * (1 + (u.KdvOrani / 100m));
+                    <tr class="group hover:bg-light transition-all">
+                        <td class="ps-4 py-4">
+                            <div class="d-flex flex-column">
+                                <span class="text-on-surface fw-bold small">@u.Ad</span>
+                                <span class="text-muted mt-1 d-flex align-items-center gap-1" style="font-size: 0.65rem; font-family: monospace;">
+                                    <span class="material-symbols-outlined" style="font-size: 0.8rem;">barcode</span>
+                                    @(u.Barkod ?? "Barkodsuz")
+                                </span>
+                            </div>
+                        </td>
+                        <td class="py-4">
+                            <span class="badge bg-surface-container text-on-surface-variant rounded-pill px-3 py-1 font-bold" style="font-size: 0.65rem;">@u.Kategori</span>
+                        </td>
+                        <td class="py-4">
+                            <div class="d-flex flex-column">
+                                <div class="text-on-surface fw-bold small">@u.BirimFiyat.ToTrParaMoney()</div>
+                                @if (u.AlisFiyati > 0)
+                                {
+                                    <div class="text-muted italic" style="font-size: 0.65rem;">@u.AlisFiyati.ToTrParaMoney() maliyet</div>
+                                }
+                            </div>
+                        </td>
+                        <td class="py-4">
+                            <span class="text-muted fw-semibold small">%@u.KdvOrani.ToString("N0")</span>
+                        </td>
+                        <td class="py-4 text-center">
+                            @if (u.StokAdedi <= 0)
+                            {
+                                <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-1 font-bold" style="font-size: 0.65rem; background-color: #ffe4e6 !important;">@u.StokAdedi Adet</span>
+                            }
+                            else if (u.StokAdedi <= u.MinStokUyari)
+                            {
+                                <span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-1 font-bold" style="font-size: 0.65rem; background-color: #fef3c7 !important; color: #92400e !important;">@u.StokAdedi Adet</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success-subtle text-success rounded-pill px-3 py-1 font-bold" style="font-size: 0.65rem; background-color: #d1fae5 !important;">@u.StokAdedi Adet</span>
+                            }
+                        </td>
+                        <td class="pe-4 py-4 text-end">
+                            <div class="d-flex justify-content-end gap-1">
+                                <a asp-action="Detail" asp-route-id="@u.Id" class="btn-list-action btn-list-action-view" title="Detay">
+                                    <span class="material-symbols-outlined">search</span>
+                                </a>
+                                <a asp-action="Form" asp-route-id="@u.Id" class="btn-list-action btn-list-action-edit" title="Düzenle">
+                                    <span class="material-symbols-outlined">edit</span>
+                                </a>
+                                <button type="button" class="btn-list-action btn-list-action-delete btn-delete" 
+                                        data-url="@Url.Action("Sil", new { id = u.Id })"
+                                        data-title="Ürünü Sil"
+                                        data-text="'@u.Ad' ürününü silmek istediğinize emin misiniz?">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @await Html.PartialAsync("_Pagination", new PaginationInfo { 
+        CurrentPage = Model.CurrentPage, 
+        TotalPages = Model.TotalPages, 
+        RouteValues = new Dictionary<string, string> { 
+            { "arama", Model.Arama ?? "" },
+            { "kategori", Model.Kategori ?? "" },
+            { "tedarikciId", Model.TedarikciId?.ToString() ?? "" },
+            { "stokDurumu", Model.StokDurumu ?? "" }
+        } 
+    })
+}
+else
+{
+    <div class="alert alert-info border-0 shadow-sm">Henüz ürün eklenmemiş veya arama kriterine uygun sonuç bulunamadı.</div>
+}

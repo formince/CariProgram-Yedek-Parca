@@ -1,0 +1,132 @@
+@model CariErinc.ViewModels.IsletmeAyarlarVM
+@{
+    ViewData["Title"] = "İşletme Ayarları";
+}
+
+<!-- Page Header -->
+<div class="page-header mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-2">
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Ayarlar</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="h3 fw-bold mb-0 text-primary-container">⚙️ İşletme Yapılandırması</h1>
+            <p class="text-muted small mb-0 mt-1">Uygulama genelindeki varsayılan değerler ve işletme kimliği</p>
+        </div>
+    </div>
+</div>
+
+<form asp-action="Index" method="post">
+    @Html.AntiForgeryToken()
+    
+    <div class="row g-4">
+        <!-- Main Settings -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-premium rounded-4 overflow-hidden bg-white mb-4">
+                <div class="card-header bg-surface-container-low py-3 px-4 border-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">business</span>
+                        <h6 class="fw-bold mb-0">Genel Bilgiler</h6>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="DukkanAdi" class="form-label extra-small fw-bold text-uppercase text-muted ls-wide"></label>
+                            <input asp-for="DukkanAdi" class="form-control border-0 bg-surface-container-low py-2 rounded-3" placeholder="İşletme Adınız" />
+                            <span asp-validation-for="DukkanAdi" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="IsletmeTipi" class="form-label extra-small fw-bold text-uppercase text-muted ls-wide"></label>
+                            <input asp-for="IsletmeTipi" class="form-control border-0 bg-surface-container-low py-2 rounded-3" placeholder="Örn: Kırtasiye, Market" />
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Adres" class="form-label extra-small fw-bold text-uppercase text-muted ls-wide"></label>
+                            <textarea asp-for="Adres" class="form-control border-0 bg-surface-container-low py-2 rounded-3" rows="2" placeholder="Açık Adres"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Telefon" class="form-label extra-small fw-bold text-uppercase text-muted ls-wide"></label>
+                            <input asp-for="Telefon" class="form-control border-0 bg-surface-container-low py-2 rounded-3" placeholder="05XX XXX XX XX" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-premium rounded-4 overflow-hidden bg-white">
+                <div class="card-header bg-surface-container-low py-3 px-4 border-0">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">receipt</span>
+                        <h6 class="fw-bold mb-0">Finansal & Vergi Ayarları</h6>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label asp-for="VarsayilanKdv" class="form-label extra-small fw-bold text-uppercase text-muted ls-wide"></label>
+                            <div class="input-group">
+                                <input asp-for="VarsayilanKdv" type="number" class="form-control border-0 bg-surface-container-low py-2 rounded-start-3" min="0" max="100" />
+                                <span class="input-group-text border-0 bg-surface-container-low rounded-end-3 text-muted">%</span>
+                            </div>
+                            <span asp-validation-for="VarsayilanKdv" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-8">
+                            <label asp-for="KdvOranlariMetni" class="form-label extra-small fw-bold text-uppercase text-muted ls-wide"></label>
+                            <input asp-for="KdvOranlariMetni" class="form-control border-0 bg-surface-container-low py-2 rounded-3" placeholder="0, 1, 8, 10, 20" />
+                            <span asp-validation-for="KdvOranlariMetni" class="text-danger small"></span>
+                            <div class="form-text extra-small mt-2">Virgül ile ayırarak geçerli KDV oranlarını tanımlayın.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0 p-4 pt-0">
+                    <button type="submit" class="btn btn-primary px-5 rounded-pill fw-bold shadow-sm d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined">save</span> Değişiklikleri Kaydet
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Actions -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-premium rounded-4 overflow-hidden bg-white">
+                <div class="card-header bg-primary-container py-3 px-4 border-0">
+                    <h6 class="fw-bold mb-0 text-primary">Sistem Yönetimi</h6>
+                </div>
+                <div class="list-group list-group-flush border-0">
+                    <a asp-controller="Rol" asp-action="Index" class="list-group-item list-group-item-action border-0 px-4 py-3 d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="material-symbols-outlined text-muted">lock_person</span>
+                            <div>
+                                <div class="fw-bold small">Roller ve Yetkiler</div>
+                                <div class="text-muted extra-small">Erişim seviyelerini yönetin</div>
+                            </div>
+                        </div>
+                        <span class="material-symbols-outlined fs-5 text-muted">chevron_right</span>
+                    </a>
+                    <a asp-controller="KullaniciYonetimi" asp-action="Index" class="list-group-item list-group-item-action border-0 px-4 py-3 d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="material-symbols-outlined text-muted">group</span>
+                            <div>
+                                <div class="fw-bold small">Kullanıcı Yönetimi</div>
+                                <div class="text-muted extra-small">Personel hesaplarını düzenleyin</div>
+                            </div>
+                        </div>
+                        <span class="material-symbols-outlined fs-5 text-muted">chevron_right</span>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-4 rounded-4 bg-surface-container-low border border-dashed border-2">
+                <div class="d-flex align-items-center gap-2 mb-2 text-primary">
+                    <span class="material-symbols-outlined fs-4">info</span>
+                    <span class="fw-bold small">Bilgilendirme</span>
+                </div>
+                <p class="text-muted extra-small mb-0">
+                    Burada yapılan değişiklikler tüm yeni oluşturulacak belgeleri ve hesaplamaları etkiler. Lütfen vergi oranlarını güncellerken dikkatli olun.
+                </p>
+            </div>
+        </div>
+    </div>
+</form>

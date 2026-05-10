@@ -1,0 +1,167 @@
+@inject CariErinc.Services.Interfaces.IAyarService AyarSvc
+@inject CariErinc.Services.Interfaces.IYetkiCacheService YetkiCache
+@{
+    var isAdmin = User.HasClaim("is_admin", "true");
+    var dukkanAdi = await AyarSvc.GetAsync("DukkanAdi") ?? "Cari Erinc";
+    
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    bool IsActiveLink(string ctrl, string act)
+    {
+        return string.Equals(currentController, ctrl, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(currentAction, act, StringComparison.OrdinalIgnoreCase);
+    }
+
+    string GetIcon(string label)
+    {
+        var cleanLabel = label.Replace("📊", "").Replace("📦", "").Replace("🔄", "").Replace("⚡", "").Replace("🛒", "")
+                              .Replace("👤", "").Replace("💳", "").Replace("🏭", "").Replace("🧾", "").Replace("💸", "")
+                              .Replace("💰", "").Replace("📁", "").Replace("📈", "").Replace("📅", "").Replace("⚠️", "")
+                              .Replace("📋", "").Replace("💵", "").Replace("📜", "").Replace("⚙️", "").Replace("🔑", "")
+                              .Replace("👥", "").Replace("⬅️", "").Trim();
+
+        return cleanLabel switch
+        {
+            "Dashboard" => "dashboard",
+            "Ürünler" => "inventory_2",
+            "Stok Hareketleri" => "swap_vert",
+            "Hızlı Satış" => "bolt",
+            "Satışlar" => "shopping_cart",
+            "Cariler" => "groups",
+            "Veresiye" => "account_balance_wallet",
+            "Veresiye Listesi" => "account_balance_wallet",
+            "Alışlar" => "receipt_long",
+            "Toptancı Borçları" => "money_off",
+            "Kasa" => "account_balance",
+            "Gider Kategorileri" => "category",
+            "Günlük Satış" => "trending_up",
+            "Aylık Özet" => "calendar_month",
+            "Stok Uyarı" => "warning",
+            "Kâr/Zarar Raporu" => "finance_mode",
+            "İşlem Geçmişi" => "history",
+            "İşletme Ayarları" => "settings",
+            "Roller" => "key",
+            "Kullanıcılar" => "group",
+            "Çıkış" => "logout",
+            _ => "radio_button_checked"
+        };
+    }
+
+    var adminMenuGroups = new[]
+    {
+        new { Grup = "", Links = new[] {
+            new { Controller = "Dashboard", Action = "Index", Ad = "Dashboard" }
+        }},
+        new { Grup = "STOK", Links = new[] {
+            new { Controller = "Urun", Action = "Index", Ad = "Ürünler" },
+            new { Controller = "Stok", Action = "Index", Ad = "Stok Hareketleri" }
+        }},
+        new { Grup = "SATIŞ", Links = new[] {
+            new { Controller = "Satis", Action = "HizliSatis", Ad = "Hızlı Satış" },
+            new { Controller = "Satis", Action = "Index", Ad = "Satışlar" },
+            new { Controller = "Cari", Action = "Index", Ad = "Cariler" },
+            new { Controller = "Veresiye", Action = "Index", Ad = "Veresiye Listesi" }
+        }},
+        new { Grup = "ALIŞ", Links = new[] {
+            new { Controller = "Alis", Action = "Index", Ad = "Alışlar" },
+            new { Controller = "Alis", Action = "VadeliAciklar", Ad = "Toptancı Borçları" }
+        }},
+        new { Grup = "MALİYE", Links = new[] {
+            new { Controller = "Kasa", Action = "Index", Ad = "Kasa" },
+            new { Controller = "GiderKategori", Action = "Index", Ad = "Gider Kategorileri" }
+        }},
+        new { Grup = "RAPORLAR", Links = new[] {
+            new { Controller = "Rapor", Action = "Gunluk", Ad = "Günlük Satış" },
+            new { Controller = "Rapor", Action = "Aylik", Ad = "Aylık Özet" },
+            new { Controller = "Rapor", Action = "StokUyari", Ad = "Stok Uyarı" },
+            new { Controller = "Rapor", Action = "Veresiye", Ad = "Veresiye Liste" },
+            new { Controller = "Rapor", Action = "KarZarar", Ad = "Kâr/Zarar Raporu" }
+        }},
+        new { Grup = "SİSTEM", Links = new[] {
+            new { Controller = "AuditLog", Action = "Index", Ad = "İşlem Geçmişi" },
+            new { Controller = "Ayarlar", Action = "Index", Ad = "İşletme Ayarları" },
+            new { Controller = "Rol", Action = "Index", Ad = "Roller" },
+            new { Controller = "KullaniciYonetimi", Action = "Index", Ad = "Kullanıcılar" }
+        }}
+    };
+}
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="d-flex align-items-center">
+            <div class="sidebar-logo-box">
+                <span class="material-symbols-outlined">analytics</span>
+            </div>
+            <span class="header-text">@dukkanAdi</span>
+        </div>
+        <button class="sidebar-collapse-btn d-none d-lg-flex" id="sidebarCollapse" aria-label="Menüyü Daralt">
+            <span class="material-symbols-outlined">menu_open</span>
+        </button>
+    </div>
+
+    <nav class="sidebar-nav">
+        @if (isAdmin)
+        {
+            @foreach (var grup in adminMenuGroups)
+            {
+                if (!string.IsNullOrEmpty(grup.Grup))
+                {
+                    <div class="sidebar-group-title">@grup.Grup</div>
+                }
+                @foreach (var link in grup.Links)
+                {
+                    <a class="sidebar-link @(IsActiveLink(link.Controller, link.Action) ? "active" : "")"
+                       asp-controller="@link.Controller" asp-action="@link.Action">
+                        <span class="material-symbols-outlined">@GetIcon(link.Ad)</span>
+                        <span class="link-text">@link.Ad</span>
+                    </a>
+                }
+            }
+        }
+        else
+        {
+            var rolIdsClaim = User.FindFirst("rol_ids")?.Value;
+            if (!string.IsNullOrEmpty(rolIdsClaim))
+            {
+                var rolIds = rolIdsClaim.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                       .Select(s => int.TryParse(s, out var n) ? n : 0)
+                                       .Where(n => n > 0).ToArray();
+
+                var sidebarLinks = await YetkiCache.GetSidebarLinksAsync(rolIds);
+                var gruplar = sidebarLinks.Where(l => !string.IsNullOrEmpty(l.SidebarGoruntuAdi))
+                                           .GroupBy(l => l.SidebarGrubu ?? "")
+                                           .OrderBy(g => g.Key);
+
+                <a class="sidebar-link @(IsActiveLink("Dashboard", "Index") ? "active" : "")"
+                   asp-controller="Dashboard" asp-action="Index">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="link-text">Dashboard</span>
+                </a>
+
+                foreach (var grup in gruplar)
+                {
+                    if (!string.IsNullOrEmpty(grup.Key))
+                    {
+                        <div class="sidebar-group-title">@grup.Key</div>
+                    }
+                    foreach (var link in grup.OrderBy(l => l.SidebarSira))
+                    {
+                        <a class="sidebar-link @(IsActiveLink(link.ControllerAdi, link.ActionAdi) ? "active" : "")"
+                           asp-controller="@link.ControllerAdi" asp-action="@link.ActionAdi">
+                            <span class="material-symbols-outlined">@GetIcon(link.SidebarGoruntuAdi ?? "")</span>
+                            <span class="link-text">@(link.SidebarGoruntuAdi?.Replace("📊", "").Replace("📦", "").Replace("🔄", "").Replace("⚡", "").Replace("🛒", "").Replace("👤", "").Replace("💳", "").Replace("🏭", "").Replace("🧾", "").Replace("💸", "").Replace("💰", "").Replace("📁", "").Replace("📈", "").Replace("📅", "").Replace("⚠️", "").Replace("📋", "").Replace("💵", "").Replace("📜", "").Replace("⚙️", "").Replace("🔑", "").Replace("👥", "").Replace("⬅️", "").Trim() ?? "")</span>
+                        </a>
+                    }
+                }
+            }
+        }
+    </nav>
+
+    <div class="sidebar-footer">
+        <a class="sidebar-link" asp-controller="Auth" asp-action="Logout">
+            <span class="material-symbols-outlined">logout</span>
+            <span class="link-text">Çıkış Yap</span>
+        </a>
+    </div>
+</aside>

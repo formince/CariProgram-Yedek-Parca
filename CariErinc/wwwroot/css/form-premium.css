@@ -1,0 +1,249 @@
+/* CariErinc Premium Form System - Digital Curator */
+
+.form-container-premium {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.form-card-premium {
+    background: var(--renk-card);
+    border-radius: 1.5rem;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.form-card-header {
+    background: rgba(var(--renk-primary-rgb), 0.03);
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--renk-border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-card-header h6 {
+    margin: 0;
+    font-weight: 700;
+    color: var(--renk-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.8rem;
+}
+
+.form-label-caps {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--renk-text-muted);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-control-ghost {
+    background-color: var(--renk-bg);
+    border: 1px solid transparent;
+    border-radius: 0.85rem;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-control-ghost:focus {
+    background-color: #fff;
+    border-color: var(--renk-primary);
+    box-shadow: 0 0 0 4px rgba(26, 86, 219, 0.08);
+    transform: translateY(-1px);
+}
+
+.form-select-ghost {
+    background-color: var(--renk-bg);
+    border: 1px solid transparent;
+    border-radius: 0.85rem;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+}
+
+/* Minimal Table Inputs */
+.form-control-minimal {
+    background-color: var(--renk-bg);
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.form-control-minimal:focus {
+    background-color: #fff;
+    border-color: var(--renk-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.05);
+}
+
+.tonal-input-group {
+    background-color: var(--renk-surface-container-low);
+    border-radius: 0.75rem;
+    padding: 0.25rem;
+    display: flex;
+    gap: 0.25rem;
+}
+
+.form-sidebar-card {
+    background: linear-gradient(135deg, #fff, var(--renk-bg));
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    border: 1px dashed var(--renk-border);
+}
+
+.form-actions-bar {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 1.25rem;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.02);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Validation Styling */
+.field-validation-error {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--renk-danger);
+    margin-top: 0.4rem;
+    display: block;
+}
+
+/* Section Header for within cards */
+.form-section-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--renk-text);
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--renk-bg);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* --- Standardized List Action Buttons --- */
+.btn-list-action {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    border: none;
+    background: transparent;
+    color: var(--renk-text-muted);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+}
+
+.btn-list-action .material-symbols-outlined {
+    font-size: 1.25rem;
+}
+
+.btn-list-action:hover {
+    background-color: var(--renk-surface-container-high);
+    transform: translateY(-2px);
+}
+
+/* View / Detail Variant */
+.btn-list-action-view:hover {
+    color: var(--renk-primary) !important;
+}
+
+/* Edit Variant */
+.btn-list-action-edit:hover {
+    color: #f59e0b !important; /* Amber-600 */
+}
+
+/* Delete Variant */
+.btn-list-action-delete:hover {
+    color: var(--renk-danger) !important;
+}
+
+/* Special Case: Veresiye / Primary Action in list */
+.btn-list-action-primary:hover {
+    color: var(--renk-primary) !important;
+}
+
+/* --- SweetAlert2 Premium Overrides --- */
+.swal2-premium-popup {
+    border-radius: 2rem !important;
+    padding: 3rem 2rem !important;
+    box-shadow: 0 25px 80px -15px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid rgba(var(--renk-primary-rgb), 0.1) !important;
+    font-family: 'Nunito', sans-serif !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+.swal2-premium-title {
+    font-weight: 800 !important;
+    color: var(--renk-text) !important;
+    letter-spacing: -0.03em !important;
+    padding-top: 0.75rem !important;
+    font-size: 1.6rem !important;
+}
+
+.swal2-premium-html {
+    color: var(--renk-text-muted) !important;
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+    font-weight: 500 !important;
+    padding: 0 1rem !important;
+}
+
+.swal2-premium-confirm {
+    background: linear-gradient(135deg, var(--renk-danger) 0%, #b91c1c 100%) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 3rem !important;
+    font-weight: 700 !important;
+    padding: 0.85rem 2.5rem !important;
+    margin: 0.75rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    font-size: 0.85rem !important;
+    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.3) !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.swal2-premium-confirm:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 0 12px 30px rgba(220, 38, 38, 0.45) !important;
+    filter: brightness(1.1) !important;
+}
+
+.swal2-premium-cancel {
+    border-radius: 3rem !important;
+    font-weight: 700 !important;
+    padding: 0.85rem 2.5rem !important;
+    margin: 0.75rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    font-size: 0.85rem !important;
+    background-color: var(--renk-surface-container-high) !important;
+    color: var(--renk-text-muted) !important;
+    transition: all 0.2s ease !important;
+    border: 1px solid transparent !important;
+}
+
+.swal2-premium-cancel:hover {
+    background-color: var(--renk-surface-container-highest) !important;
+    color: var(--renk-text) !important;
+    transform: translateY(-1px) !important;
+}
+
+.swal2-premium-icon {
+    border-width: 3px !important;
+    margin-bottom: 2rem !important;
+    transform: scale(1.1) !important;
+}

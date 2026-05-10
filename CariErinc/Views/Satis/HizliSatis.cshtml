@@ -1,0 +1,299 @@
+@model CariErinc.ViewModels.SatisVM
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Hızlı Satış";
+    var urunlerJson = ViewBag.Urunler as string ?? "[]";
+    var barkodAraUrl = Url.Action("BarkodAra", "Satis") ?? "/Satis/BarkodAra";
+    var urunAraMetinUrl = Url.Action("UrunAraMetin", "Satis") ?? "/Satis/UrunAraMetin";
+    var musteriAraUrl = Url.Action("MusteriAra", "Satis") ?? "/Satis/MusteriAra";
+    var taslakKaydetUrl = Url.Action("TaslakKaydet", "Satis") ?? "/Satis/TaslakKaydet";
+    var seciliMusteriAd = ViewBag.SeciliMusteriAd as string ?? "";
+    var hizliSatisNotMetni = Model?.Aciklama;
+    if (!string.IsNullOrEmpty(hizliSatisNotMetni) &&
+        string.Equals(hizliSatisNotMetni.Trim(), "Bekleyen Sepet", StringComparison.OrdinalIgnoreCase))
+        hizliSatisNotMetni = null;
+}
+
+<div class="row g-3 mb-4 mt-1">
+    <div class="col-lg-9">
+
+        <!-- Barcode Section -->
+        <div class="mb-5 position-relative group">
+            <div class="input-group input-group-lg shadow-sm rounded-4 overflow-hidden border-0">
+                <span class="input-group-text bg-white border-0 ps-4">
+                    <span class="material-symbols-outlined text-primary fs-2">barcode_scanner</span>
+                </span>
+                <input type="text" id="barkodInput" class="form-control form-control-lg border-0 ps-2 py-4 fw-medium text-on-surface" 
+                       placeholder="Barkod Okutun veya Yazıp Enter'a Basın..." autofocus autocomplete="off" />
+                <button type="button" class="btn btn-primary px-4 fw-bold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#urunAraModal">
+                    <span class="material-symbols-outlined">search</span> Ürün Ara
+                </button>
+            </div>
+            <div class="position-absolute top-100 mt-2 start-0">
+                <span class="badge bg-surface-container text-on-surface-variant font-label text-uppercase tracking-tighter" style="font-size: 0.6rem;">Okumaya Hazır</span>
+            </div>
+        </div>
+
+        <!-- Cart Table Wrapper -->
+        <div class="table-wrapper mb-4 rounded-4 shadow-sm border-0 bg-surface-container-low overflow-hidden d-flex flex-column" style="height: calc(100vh - 220px);">
+            <div class="table-responsive flex-grow-1" style="overflow-y: auto;">
+                <table class="table table-hover mb-0 align-middle" id="sepetTable">
+                    <thead class="bg-white text-muted font-black text-uppercase tracking-widest sticky-top" style="font-size: 0.65rem; z-index: 5;">
+                        <tr>
+                            <th class="ps-4 py-4">Ürün Bilgisi</th>
+                            <th class="py-4">Barkod</th>
+                            <th class="py-4" style="width: 80px;">Miktar</th>
+                            <th class="py-4" style="width: 100px;">Birim Fiyat</th>
+                            <th class="py-4" style="width: 80px;">İndirim%</th>
+                            <th class="py-4" style="width: 100px;">Net Birim</th>
+                            <th class="py-4 text-end" style="width: 100px;">Toplam</th>
+                            <th class="pe-4 py-4" style="width: 60px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="sepetBody" class="divide-y divide-surface-container">
+                        <!-- Satırlar JS ile render edilecek -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div id="sepetBos" class="alert alert-info border-0 shadow-sm rounded-4 text-center py-5">
+             <span class="material-symbols-outlined fs-1 d-block mb-3 opacity-25">shopping_cart</span>
+             Sepet boş. Barkod okutarak veya ürün ekleyerek başlayın.
+        </div>
+    </div>
+
+    <!-- Payment Panel -->
+    <div class="col-lg-3 sticky-top" style="top: 1rem; z-index: 10;">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-surface-container-low">
+            <div class="card-body p-3 d-flex flex-column gap-3">
+                <!-- POS Summary Area -->
+                <div class="bg-white rounded-4 p-3 shadow-sm mb-1 border-start border-4 border-primary">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-uppercase tracking-widest text-muted fw-black" style="font-size: 0.6rem;">Genel Toplam</span>
+                        <span class="badge bg-primary-container text-primary rounded-pill extra-small">Ödenecek</span>
+                    </div>
+                    <div id="genelToplam" class="h1 fw-black text-on-surface mb-2 tracking-tighter text-end">0,00 <span class="fs-4 text-muted">₺</span></div>
+                    
+                    <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                        <div class="text-center">
+                            <div class="extra-small text-muted text-uppercase fw-bold">Ara Toplam</div>
+                            <div id="araToplam" class="small fw-bold">0,00 ₺</div>
+                        </div>
+                        <div class="text-center" id="indirimSatiri" style="display:none;">
+                            <div class="extra-small text-danger text-uppercase fw-bold">İndirim</div>
+                            <div id="genelIndirimTutarDisp" class="small fw-bold text-danger">-0,00 ₺</div>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="odemeForm" method="post" asp-action="HizliSatisTamamla" class="d-flex flex-column gap-3">
+                    @Html.AntiForgeryToken()
+                    
+                    <!-- Ödeme Tipi -->
+                    <div>
+                        <label class="form-label extra-small fw-bold text-uppercase tracking-wider text-muted mb-2 d-block">Ödeme Yöntemi</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="odemeTipi" value="Pesin" id="tipPesin" checked />
+                                <label class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center gap-1 rounded-4" for="tipPesin">
+                                    <span class="material-symbols-outlined fs-4">payments</span>
+                                    <span class="fw-bold extra-small">Peşin</span>
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="odemeTipi" value="Veresiye" id="tipVeresiye" />
+                                <label class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center gap-1 rounded-4" for="tipVeresiye">
+                                    <span class="material-symbols-outlined fs-4">account_balance</span>
+                                    <span class="fw-bold extra-small">Veresiye</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Müşteri Seçimi -->
+                    <div id="musteriGroup" style="display:none;" class="bg-white p-3 rounded-4 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label for="musteriAraInput" class="form-label small fw-bold text-uppercase tracking-wider text-muted mb-0">Müşteri Seçimi</label>
+                            <a href="/Cari/Form?rol=musteri" class="text-primary fw-bold" style="font-size: 0.7rem;">+ Yeni Cari</a>
+                        </div>
+                        <div class="position-relative mb-2">
+                            <span class="material-symbols-outlined position-absolute top-50 start-0 translate-middle-y ms-3 text-muted fs-5">person_search</span>
+                            <input type="text" id="musteriAraInput" class="form-control border-0 bg-surface-container rounded-3 ps-5 py-3" 
+                                   placeholder="İsim veya Telefon ile Ara..." autocomplete="off" />
+                            <div id="musteriAraSonuc" class="list-group position-absolute w-100 shadow-lg mt-1 rounded-4 overflow-hidden border-0" 
+                                 style="z-index:2000; max-height:220px; overflow-y:auto; display:none;"></div>
+                        </div>
+                        <input type="hidden" name="musteriId" id="musteriId" value="" />
+                        <div id="musteriSecildiContainer" class="d-flex align-items-center gap-2 mt-2" style="display:none !important;">
+                            <div class="p-2 bg-success text-white rounded-circle d-flex align-items-center">
+                                <span class="material-symbols-outlined fs-6">check</span>
+                            </div>
+                            <small id="musteriSecildi" class="text-on-surface fw-bold"></small>
+                        </div>
+                        <div class="mt-2">
+                            <label for="hizliSatisAciklama" class="form-label extra-small fw-bold text-uppercase text-muted mb-1">Satış notu <span class="fw-normal">(isteğe bağlı)</span></label>
+                            <textarea id="hizliSatisAciklama" name="aciklama" class="form-control form-control-sm border-0 bg-surface-container rounded-3" rows="2" maxlength="500" autocomplete="off" placeholder="Kısa not...">@hizliSatisNotMetni</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Genel İndirim Kutusu -->
+                    <div class="bg-white p-4 rounded-4 shadow-sm">
+                         <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-black text-uppercase text-muted mb-1" style="font-size: 0.65rem; tracking: 0.15em;">Genel İndirim</div>
+                                <div id="genelIndirimOzet" class="small fw-semibold text-on-surface-variant">Uygulanmadı</div>
+                            </div>
+                            <button type="button" class="btn btn-link p-0 text-primary fw-bold small" id="btnGenelIndirimAc">Düzenle</button>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="genelIndirimModu" id="hidGenelIndirimModu" value="0" />
+                    <input type="hidden" name="genelIndirimOrani" id="hidGenelIndirimOrani" value="0,00" />
+                    <input type="hidden" name="genelIndirimTutari" id="hidGenelIndirimTutari" value="0,00" />
+                    <input type="hidden" name="hedefToplam" id="hidHedefToplam" value="0,00" />
+                    <div id="satirlarContainer"></div>
+                    <input type="hidden" name="taslakId" id="taslakIdInput" value="@Model?.TaslakId" />
+                    
+                    <!-- Action Buttons -->
+                    <div class="mt-auto d-flex flex-column gap-2 pt-2">
+                        <button type="submit" class="btn btn-primary w-100 py-4 rounded-4 shadow-lg d-flex align-items-center justify-center gap-2 active:scale-95 transition-all" id="tamamlaBtn" disabled>
+                            <span class="material-symbols-outlined fs-3" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                            <span class="fs-5 fw-black text-uppercase tracking-wider">Onayla</span>
+                        </button>
+                        
+                        <button type="button" class="btn btn-surface-container-highest w-100 py-3 rounded-4 fw-bold d-flex align-items-center justify-center gap-2" id="bekletBtn" disabled>
+                            <span class="material-symbols-outlined fs-5">pause_circle</span> Beklet
+                        </button>
+                        
+                        <a asp-action="Taslaklar" class="btn btn-outline-warning w-100 py-3 rounded-4 fw-bold d-flex align-items-center justify-center gap-2 position-relative">
+                            <span class="material-symbols-outlined fs-5">inventory_2</span> Bekleyen Sepetler
+                            @if (ViewBag.TaslaklarCount > 0)
+                            {
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-white">
+                                    @ViewBag.TaslaklarCount
+                                </span>
+                            }
+                        </a>
+                        
+                        <a href="@Url.Action("HizliSatis")" class="btn btn-text-danger w-100 py-2 rounded-pill fw-bold d-flex align-items-center justify-center gap-2">
+                            <span class="material-symbols-outlined fs-6">cancel</span> Vazgeç
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Search Modal -->
+<div class="modal fade" id="urunAraModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 bg-surface-container-low px-4 py-4">
+                <h5 class="modal-title fw-black text-uppercase tracking-widest text-primary" style="font-size: 0.9rem;">Ürün Ara</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4 pb-4 bg-surface-container-low">
+                <div class="position-relative mb-4">
+                    <span class="material-symbols-outlined position-absolute top-50 start-0 translate-middle-y ms-3 text-muted fs-4">search</span>
+                    <input type="text" id="urunAraInput" class="form-control form-control-lg border-0 bg-white rounded-4 ps-5 py-3 shadow-sm" 
+                           placeholder="Ürün adı veya barkod yazın..." autocomplete="off" />
+                </div>
+                <div id="urunAraSonuc" class="list-group list-group-flush rounded-4 overflow-hidden border shadow-sm" style="max-height: 350px; overflow-y: auto;"></div>
+                <p class="text-muted small mt-3 mb-0 text-center" id="urunAraYardim">Sonuca tıklayarak sepete ekleyin.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- General Discount Modal -->
+<div class="modal fade" id="genelIndirimModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 bg-surface-container px-4 py-4">
+                <h5 class="modal-title fw-black text-uppercase tracking-widest text-primary" style="font-size: 0.9rem;">Genel İndirim Uygula</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted small mb-4">İndirim tüm sepet tutarı üzerinden hesaplanacaktır.</p>
+                <div class="d-flex gap-2 mb-4 bg-surface-container p-1 rounded-3">
+                    <input type="radio" class="btn-check" name="modalIndirimModu" id="modalIndirimModYuzde" value="yuzde" checked autocomplete="off" />
+                    <label class="btn btn-white flex-grow-1 border-0 rounded-2 fw-bold small py-2" for="modalIndirimModYuzde">% Oran</label>
+                    <input type="radio" class="btn-check" name="modalIndirimModu" id="modalIndirimModManuel" value="manuel" autocomplete="off" />
+                    <label class="btn btn-white flex-grow-1 border-0 rounded-2 fw-bold small py-2" for="modalIndirimModManuel">Hedef Toplam</label>
+                </div>
+                <div id="modalIndirimYuzdeSec">
+                    <label class="form-label small fw-bold text-uppercase text-muted" for="modalGenelIndirimOrani">İndirim Oranı</label>
+                    <div class="input-group input-group-lg shadow-sm rounded-3 overflow-hidden">
+                        <input type="text" id="modalGenelIndirimOrani" class="form-control border-0 bg-surface-container ps-3 input-para-tr font-mono fw-bold" inputmode="decimal" autocomplete="off" value="0,00" />
+                        <span class="input-group-text border-0 bg-surface-container px-3 fw-bold">%</span>
+                    </div>
+                </div>
+                <div id="modalIndirimManuelSec" style="display:none;">
+                    <label class="form-label small fw-bold text-uppercase text-muted" for="modalGenelToplamHedef">Ödenecek Toplam</label>
+                    <div class="input-group input-group-lg shadow-sm rounded-3 overflow-hidden">
+                        <input type="text" id="modalGenelToplamHedef" class="form-control border-0 bg-surface-container ps-3 input-para-tr font-mono fw-bold" inputmode="decimal" autocomplete="off" placeholder="Örn. 500,00" />
+                        <span class="input-group-text border-0 bg-surface-container px-3 fw-bold">₺</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4 gap-2">
+                <button type="button" class="btn btn-outline-danger fw-bold rounded-3 px-4" id="btnGenelIndirimTemizle">Temizle</button>
+                <div class="ms-auto d-flex gap-2">
+                    <button type="button" class="btn btn-surface-container-highest fw-bold rounded-3 px-4" data-bs-dismiss="modal">Vazgeç</button>
+                    <button type="button" class="btn btn-primary fw-bold rounded-3 px-4" id="btnGenelIndirimUygula">Uygula</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+@using CariErinc.Models
+@{
+    var hizliUrls = new
+    {
+        barkodAra = barkodAraUrl,
+        urunAraMetin = urunAraMetinUrl,
+        musteriAra = musteriAraUrl,
+        taslakKaydet = taslakKaydetUrl
+    };
+    string? initialSatirlarJson = null;
+    if (Model?.Satirlar != null && Model.Satirlar.Any())
+    {
+        initialSatirlarJson = JsonSerializer.Serialize(Model.Satirlar.Where(s => s.UrunId > 0).Select(s => new
+        {
+            urunId = s.UrunId,
+            miktar = s.Miktar,
+            birimFiyat = s.BirimFiyat,
+            indirimOrani = s.IndirimOrani,
+            kdvOrani = s.KdvOrani,
+            satirNetTutarHedef = s.SatirNetTutarHedef
+        }));
+    }
+    var hizliUi = new
+    {
+        musteriId = Model?.MusteriId ?? 0,
+        seciliMusteriAd = seciliMusteriAd,
+        genelIndirimModu = Model != null ? (int)Model.GenelIndirimModu : (int)GenelIndirimModu.Yuzde,
+        genelIndirimOrani = Model?.GenelIndirimOrani ?? 0m,
+        genelIndirimTutari = Model?.GenelIndirimTutari ?? 0m,
+        hedefToplam = Model?.HedefToplam ?? 0m
+    };
+}
+    <script>
+        window.CariErincHizliSatis = {
+            urls: @Html.Raw(JsonSerializer.Serialize(hizliUrls)),
+            urunler: @Html.Raw(urunlerJson),
+            varsayilanKdv: @(ViewBag.VarsayilanKdv ?? 20),
+            kdvListesi: @Html.Raw(JsonSerializer.Serialize((ViewBag.KdvListesi as SelectList)?.Select(x => new { value = x.Value, text = x.Text }))),
+            urunAraMetinLimitBarkodSonrasi: 50,
+            initialSatirlar: @(initialSatirlarJson is not null ? Html.Raw(initialSatirlarJson) : Html.Raw("null")),
+            ui: @Html.Raw(JsonSerializer.Serialize(hizliUi))
+        };
+    </script>
+    <script src="~/js/satis-urun-arama.js" asp-append-version="true"></script>
+    <script src="~/js/satis-hizli-genel-indirim.js" asp-append-version="true"></script>
+    <script src="~/js/satis-hizli.js" asp-append-version="true"></script>
+}

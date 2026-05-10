@@ -1,0 +1,24 @@
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@inject CariErinc.Services.Interfaces.IAyarService AyarSvc
+@{
+    var dukkanAdi = await AyarSvc.GetAsync("DukkanAdi") ?? "Kırtasiye Dükkanı";
+    var title = ViewData["Title"] as string ?? "Panel";
+    var userName = HttpContextAccessor.HttpContext?.User?.Identity?.Name ?? "Kullanıcı";
+}
+<nav class="top-navbar">
+    <button class="btn btn-link navbar-toggle d-lg-none" type="button" id="sidebarToggle" aria-label="Menüyü aç">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+        </svg>
+    </button>
+    <div class="navbar-title-container">
+        <span class="navbar-shop-name d-none d-sm-inline">@dukkanAdi</span>
+        <span class="navbar-shop-separator d-none d-sm-inline">|</span>
+        <h1 class="navbar-title">@title</h1>
+    </div>
+    <div class="navbar-actions">
+      @*   <a class="btn btn-outline-primary btn-sm navbar-btn" asp-controller="Kasa" asp-action="Index">💰 Kasa</a>
+        <span class="navbar-user">@userName</span> *@
+        <a class="btn btn-outline-danger btn-sm navbar-btn" asp-controller="Auth" asp-action="Logout">Çıkış</a>
+    </div>
+</nav>

@@ -1,0 +1,95 @@
+@model List<CariErinc.ViewModels.KullaniciIndexVM>
+@{
+    ViewData["Title"] = "Kullanıcı Yönetimi";
+}
+
+<!-- Page Header -->
+<div class="page-header mb-5">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <div class="p-3 bg-primary-container text-primary rounded-4 shadow-sm">
+                <span class="material-symbols-outlined fs-1">people</span>
+            </div>
+        </div>
+        <div class="col">
+            <h1 class="h3 fw-bold mb-1 text-primary-container">Kullanıcı Yönetimi</h1>
+            <p class="text-muted mb-0">Sistem kullanıcılarını yönet</p>
+        </div>
+        <div class="col-auto">
+            <a asp-action="Form" class="btn btn-lg btn-primary">
+                <span class="material-symbols-outlined me-2" style="vertical-align: middle; font-size: 1.25rem;">add</span>
+                Yeni Kullanıcı
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Kullanıcı Adı</th>
+                <th class="text-center">Durum</th>
+                <th>Roller</th>
+                <th>Oluşturulma</th>
+                <th class="text-end">İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var k in Model)
+            {
+                <tr>
+                    <td class="fw-bold fs-6">@k.KullaniciAdi</td>
+                    <td class="text-center">
+                        @if (k.AktifMi)
+                        {
+                            <span class="badge bg-success-subtle text-success border border-success">Aktif</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary">Pasif</span>
+                        }
+                    </td>
+                    <td>
+                        @if (k.Roller.Any())
+                        {
+                            @foreach (var rol in k.Roller)
+                            {
+                                <span class="badge bg-primary-subtle text-primary border border-primary me-1">@rol</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted small">Rol atanmamış</span>
+                        }
+                    </td>
+                    <td class="text-muted small">@k.OlusturulmaTarihi.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                    <td class="text-end text-nowrap">
+                        <div class="d-flex justify-content-end align-items-center gap-1">
+                            <a asp-action="Form" asp-route-id="@k.Id" class="btn-list-action btn-list-action-edit" title="Düzenle">
+                                <span class="material-symbols-outlined">edit</span>
+                            </a>
+                            @if (User.FindFirst("kullanici_id")?.Value != k.Id.ToString())
+                            {
+                                <button type="button" class="btn-list-action btn-list-action-delete btn-delete" 
+                                        data-url="@Url.Action("Sil", new { id = k.Id })"
+                                        data-title="Kullanıcıyı Sil"
+                                        data-text="@k.KullaniciAdi kullanıcısını silmek istediğinize emin misiniz?">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn-list-action opacity-25 cursor-not-allowed" disabled title="Kendi hesabınızı silemezsiniz">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    </div>
+</div>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+
+<html class="light" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CariErinc - Kasa Yönetimi</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#737686",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-container-highest": "#e0e3e5",
+                        "primary": "#004ac6",
+                        "on-secondary-container": "#00714e",
+                        "surface-variant": "#e0e3e5",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed": "#410002",
+                        "on-secondary-fixed": "#002114",
+                        "on-secondary": "#ffffff",
+                        "surface": "#f7f9fb",
+                        "on-tertiary-container": "#ffecea",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "background": "#f7f9fb",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "tertiary-container": "#d52022",
+                        "surface-container": "#eceef0",
+                        "surface-bright": "#f7f9fb",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "secondary-fixed-dim": "#68dba9",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#434655",
+                        "tertiary-fixed": "#ffdad6",
+                        "on-background": "#191c1e",
+                        "primary-container": "#2563eb",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#85f8c4",
+                        "surface-dim": "#d8dadc",
+                        "surface-tint": "#0053db",
+                        "on-surface": "#191c1e",
+                        "outline-variant": "#c3c6d7",
+                        "inverse-surface": "#2d3133",
+                        "tertiary": "#ae0010",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#00174b",
+                        "tertiary-fixed-dim": "#ffb4ab",
+                        "secondary-container": "#82f5c1",
+                        "on-secondary-fixed-variant": "#005137",
+                        "on-error": "#ffffff",
+                        "secondary": "#006c4a",
+                        "on-tertiary-fixed-variant": "#93000b",
+                        "on-primary-container": "#eeefff",
+                        "inverse-primary": "#b4c5ff",
+                        "inverse-on-surface": "#eff1f3",
+                        "primary-fixed": "#dbe1ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar (Authority: JSON & Design System) -->
+<aside class="h-screen w-72 flex-col fixed left-0 top-0 hidden lg:flex bg-slate-50 dark:bg-slate-950 p-4 border-r border-slate-200/10 z-50">
+<div class="flex items-center gap-3 px-2 mb-10">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-primary-container flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<h1 class="text-xl font-black text-blue-700 dark:text-blue-500 tracking-tighter">CariErinc</h1>
+<p class="text-[10px] uppercase tracking-[0.2em] text-outline font-bold">Enterprise Ledger</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 flex-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all font-inter text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all font-inter text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="point_of_sale">point_of_sale</span>
+<span>Satış</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all font-inter text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span>Stok</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all font-inter text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span>Cari Yönetim</span>
+</a>
+<!-- Active State for Maliye/Kasa Context -->
+<a class="flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-400 shadow-sm rounded-xl font-inter text-sm font-semibold tracking-wide translate-x-1 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<span>Maliye</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all font-inter text-sm font-semibold tracking-wide" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span>Raporlar</span>
+</a>
+</nav>
+<div class="mt-auto pt-4 flex flex-col gap-2 border-t border-slate-200/50">
+<button class="w-full py-4 px-4 bg-gradient-to-r from-primary to-primary-container text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="bolt">bolt</span>
+                Hızlı Satış
+            </button>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:text-blue-600 rounded-xl transition-all font-inter text-sm font-semibold" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span>Destek</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-tertiary hover:bg-tertiary/5 rounded-xl transition-all font-inter text-sm font-semibold" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span>Çıkış</span>
+</a>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="lg:ml-72 min-h-screen">
+<!-- TopAppBar (Authority: JSON) -->
+<header class="docked full-width top-0 sticky z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0px_4px_20px_rgba(0,74,198,0.04)] flex justify-between items-center w-full px-8 py-4">
+<div class="flex items-center gap-6">
+<h2 class="text-2xl font-bold tracking-tighter text-blue-700 dark:text-blue-500">Kasa Yönetimi</h2>
+<div class="hidden md:flex items-center bg-surface-container rounded-full px-4 py-1.5 gap-2">
+<span class="material-symbols-outlined text-outline text-sm" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 text-on-surface" placeholder="İşlem veya fiş no ara..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1">
+<button class="p-2 text-slate-500 hover:bg-slate-100/50 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100/50 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant/30 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-bold text-on-surface">Ahmet Yılmaz</p>
+<p class="text-[10px] text-outline font-medium">Mağaza Müdürü</p>
+</div>
+<img alt="User Profile Avatar" class="w-10 h-10 rounded-full border-2 border-primary/10 object-cover" data-alt="professional portrait of a man in business attire, clean office background, studio lighting, high quality photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAamm-Lsi4nFPh99Ftm6KfQSlMf0nwI1iWsIrGZcSAT93XOplL-tun7pxqzAvH9HO9j78zQ_yZJ3YKnKA33E1u_7nIDJ_MR6mNUThGKuGSXfmVZrOTgFwp14tJq0bSoHiLAVNL-wtF0CanjUKEQ-7O59KbS-YAiqMcbMdMs74wW4nB2hjKaAU4yHrchAsTyQuDr8o3pNdOsYz4M7CFYuA6Sff5Tfg-ELO978VWzRoULuKh3Rn8VFs0944JafbDniB60273DV2iS9Sz9"/>
+</div>
+</div>
+</header>
+<div class="p-8 space-y-10">
+<!-- Summary Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Total Balance Card -->
+<div class="bg-surface-container-lowest p-8 rounded-lg shadow-sm group hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+<div class="flex justify-between items-start mb-6">
+<div class="p-3 bg-primary/10 text-primary rounded-2xl">
+<span class="material-symbols-outlined text-3xl" data-icon="account_balance_wallet" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+<span class="text-[10px] font-bold text-primary bg-primary-fixed px-3 py-1 rounded-full uppercase tracking-widest">Ana Kasa</span>
+</div>
+<p class="text-outline text-sm font-medium mb-1">Toplam Bakiye</p>
+<div class="flex items-baseline gap-1">
+<span class="text-4xl font-extrabold tracking-tighter text-on-surface">142.850</span>
+<span class="text-xl font-semibold text-outline">,00 ₺</span>
+</div>
+<div class="mt-6 flex items-center gap-2 text-secondary font-bold text-sm">
+<span class="material-symbols-outlined text-sm" data-icon="trending_up">trending_up</span>
+<span>12% geçen aya göre</span>
+</div>
+</div>
+<!-- Daily Inflow Card -->
+<div class="bg-surface-container-lowest p-8 rounded-lg shadow-sm hover:shadow-xl hover:shadow-secondary/5 transition-all duration-300">
+<div class="flex justify-between items-start mb-6">
+<div class="p-3 bg-secondary/10 text-secondary rounded-2xl">
+<span class="material-symbols-outlined text-3xl" data-icon="payments" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<div class="w-12 h-1 bg-secondary/20 rounded-full"></div>
+</div>
+<p class="text-outline text-sm font-medium mb-1">Günlük Giriş</p>
+<div class="flex items-baseline gap-1">
+<span class="text-4xl font-extrabold tracking-tighter text-on-surface">12.420</span>
+<span class="text-xl font-semibold text-outline">,50 ₺</span>
+</div>
+<div class="mt-6 flex items-center gap-4">
+<div class="flex -space-x-2">
+<img alt="Avatar" class="w-6 h-6 rounded-full border-2 border-white" data-alt="close up headshot of person" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiPp6s9NMJKzmtRKemcJfB-LuZCNPVixEOIFDz_TIDclT-9F7OIryDVJoqKxdMPcGZNm2G595LNn39wa8kkDIzlm5ySRlSRJTmydyjJjz-umIDSe0bH1bsZCaaZo7xqdxAzD1bdxH_jH--ECIerf8ZgS_av-JRH3elmqvyF86GteOi7PpekCABcBb4BIaIWp8_W-iEBI-7OKZ6Skn4Iz9u4P4wjo7mvj8wt3UuRsFbIriE1Gm0Wh8-WNvm316YZ0KJqKekXtGHCtzL"/>
+<img alt="Avatar" class="w-6 h-6 rounded-full border-2 border-white" data-alt="close up headshot of person" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfN8LmREo7XzS8LQ-6DY3PoZyT9I_IMRgKcxDGz78EgEAnIgVm2RSKopg-FAkv5si2DZfRQtM-hXlwBFhmLKTgADvaNEJKq_w0axQPF0u6w5DsGW7tLgik86HlUz0AUwitAe1FnDVPkuCy193OMCi1R9oa3abgSB-T5n23ZYwhIyOEOuBa70Kpl-T7UL4DUAwuGQMSJ9mYgiVN7VT4iLy_GLX0M8aXxrEGxUMxhWF31LckIXIvra3w187ae5a2xUNwix9T_Sow6lp-"/>
+<div class="w-6 h-6 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[8px] font-bold">+8</div>
+</div>
+<span class="text-[11px] text-outline font-semibold">24 yeni işlem</span>
+</div>
+</div>
+<!-- Daily Outflow Card -->
+<div class="bg-surface-container-lowest p-8 rounded-lg shadow-sm hover:shadow-xl hover:shadow-tertiary/5 transition-all duration-300">
+<div class="flex justify-between items-start mb-6">
+<div class="p-3 bg-tertiary/10 text-tertiary rounded-2xl">
+<span class="material-symbols-outlined text-3xl" data-icon="outbox" style="font-variation-settings: 'FILL' 1;">outbox</span>
+</div>
+<span class="material-symbols-outlined text-outline/30" data-icon="more_vert">more_vert</span>
+</div>
+<p class="text-outline text-sm font-medium mb-1">Günlük Çıkış</p>
+<div class="flex items-baseline gap-1 text-tertiary">
+<span class="text-4xl font-extrabold tracking-tighter">3.150</span>
+<span class="text-xl font-semibold opacity-70">,00 ₺</span>
+</div>
+<div class="mt-6">
+<div class="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+<div class="bg-tertiary h-full w-[25%] rounded-full"></div>
+</div>
+<p class="text-[11px] text-outline mt-2 font-medium">Bütçenin %25'i kullanıldı</p>
+</div>
+</div>
+</section>
+<!-- Filters & Actions -->
+<section class="flex flex-col md:flex-row items-center justify-between gap-4">
+<div class="flex flex-wrap items-center gap-3">
+<div class="bg-surface-container-low px-4 py-2.5 rounded-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-outline text-lg" data-icon="calendar_today">calendar_today</span>
+<span class="text-sm font-semibold">01 Haz - 15 Haz 2024</span>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</div>
+<div class="bg-surface-container-low px-4 py-2.5 rounded-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-outline text-lg" data-icon="filter_list">filter_list</span>
+<span class="text-sm font-semibold">Tüm İşlemler</span>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</div>
+<button class="w-11 h-11 flex items-center justify-center bg-surface-container-low text-outline rounded-xl hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+</button>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-6 py-3 border border-outline-variant/30 text-on-surface font-bold rounded-xl flex items-center gap-2 hover:bg-white transition-all">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+                        Dışa Aktar
+                    </button>
+<button class="px-8 py-3 bg-gradient-to-tr from-primary to-primary-container text-white font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+                        Yeni Tahsilat/Ödeme
+                    </button>
+</div>
+</section>
+<!-- Ledger Table (Glass Ledger Style) -->
+<section class="bg-surface-container-low rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-separate border-spacing-0">
+<thead>
+<tr class="sticky top-0 z-10 bg-white/60 backdrop-blur-md">
+<th class="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-outline border-b border-surface-container">Tarih</th>
+<th class="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-outline border-b border-surface-container">Açıklama</th>
+<th class="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-outline border-b border-surface-container">Tür</th>
+<th class="px-8 py-6 text-[11px] font-black uppercase tracking-[0.15em] text-outline border-b border-surface-container">Kategori</th>
+<th class="px-8 py-6 text-right text-[11px] font-black uppercase tracking-[0.15em] text-outline border-b border-surface-container">Tutar</th>
+<th class="px-8 py-6 border-b border-surface-container"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<tr class="group hover:bg-white transition-colors">
+<td class="px-8 py-5">
+<p class="text-sm font-bold text-on-surface">15 Haz 2024</p>
+<p class="text-[11px] text-outline">14:20</p>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-lg" data-icon="shopping_bag">shopping_bag</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Perakende Satış - Fiş #A0982</p>
+<p class="text-[11px] text-outline">Nakit Ödeme</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-container text-on-secondary-container text-[11px] font-bold rounded-full">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span>
+                                        Giriş
+                                    </span>
+</td>
+<td class="px-8 py-5 text-sm font-medium text-outline">Satış Geliri</td>
+<td class="px-8 py-5 text-right">
+<span class="text-sm font-black text-secondary">+1.250,00 ₺</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="opacity-0 group-hover:opacity-100 p-2 hover:bg-surface-container rounded-lg transition-all">
+<span class="material-symbols-outlined text-outline" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-white transition-colors">
+<td class="px-8 py-5">
+<p class="text-sm font-bold text-on-surface">14 Haz 2024</p>
+<p class="text-[11px] text-outline">09:15</p>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-lg" data-icon="electric_bolt">electric_bolt</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Elektrik Faturası Ödemesi</p>
+<p class="text-[11px] text-outline">CK Akdeniz Enerji</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-tertiary-container/10 text-tertiary text-[11px] font-bold rounded-full">
+<span class="w-1.5 h-1.5 bg-tertiary rounded-full"></span>
+                                        Çıkış
+                                    </span>
+</td>
+<td class="px-8 py-5 text-sm font-medium text-outline">Genel Gider</td>
+<td class="px-8 py-5 text-right">
+<span class="text-sm font-black text-tertiary">-840,00 ₺</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="opacity-0 group-hover:opacity-100 p-2 hover:bg-surface-container rounded-lg transition-all">
+<span class="material-symbols-outlined text-outline" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-white transition-colors">
+<td class="px-8 py-5">
+<p class="text-sm font-bold text-on-surface">14 Haz 2024</p>
+<p class="text-[11px] text-outline">18:45</p>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-lg" data-icon="person">person</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Cari Tahsilat - Melis Er</p>
+<p class="text-[11px] text-outline">Kredi Kartı</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-container text-on-secondary-container text-[11px] font-bold rounded-full">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full"></span>
+                                        Giriş
+                                    </span>
+</td>
+<td class="px-8 py-5 text-sm font-medium text-outline">Tahsilat</td>
+<td class="px-8 py-5 text-right">
+<span class="text-sm font-black text-secondary">+5.400,00 ₺</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="opacity-0 group-hover:opacity-100 p-2 hover:bg-surface-container rounded-lg transition-all">
+<span class="material-symbols-outlined text-outline" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-white transition-colors">
+<td class="px-8 py-5">
+<p class="text-sm font-bold text-on-surface">13 Haz 2024</p>
+<p class="text-[11px] text-outline">11:00</p>
+</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined text-lg" data-icon="local_shipping">local_shipping</span>
+</div>
+<div>
+<p class="text-sm font-bold text-on-surface">Tedarikçi Ödemesi - Lojistik A.Ş.</p>
+<p class="text-[11px] text-outline">Banka Havalesi</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-tertiary-container/10 text-tertiary text-[11px] font-bold rounded-full">
+<span class="w-1.5 h-1.5 bg-tertiary rounded-full"></span>
+                                        Çıkış
+                                    </span>
+</td>
+<td class="px-8 py-5 text-sm font-medium text-outline">Mal Alımı</td>
+<td class="px-8 py-5 text-right">
+<span class="text-sm font-black text-tertiary">-2.310,00 ₺</span>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="opacity-0 group-hover:opacity-100 p-2 hover:bg-surface-container rounded-lg transition-all">
+<span class="material-symbols-outlined text-outline" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-8 py-6 bg-surface-container-low flex items-center justify-between">
+<p class="text-xs font-semibold text-outline">Toplam 1,248 işlemden 1-20 arası gösteriliyor</p>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-outline-variant/20 text-outline hover:text-primary transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white font-bold shadow-md shadow-primary/20">1</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-outline-variant/20 text-on-surface font-bold hover:bg-surface-container-high transition-colors">2</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-outline-variant/20 text-on-surface font-bold hover:bg-surface-container-high transition-colors">3</button>
+<span class="px-2 text-outline">...</span>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-outline-variant/20 text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Mobile Navigation (Authority: JSON Policy) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-surface-container h-16 flex items-center justify-around px-6 z-50">
+<button class="flex flex-col items-center gap-1 text-outline">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] font-bold">Panel</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<span class="text-[10px] font-bold">Kasa</span>
+</button>
+<div class="relative -top-4">
+<button class="w-12 h-12 bg-primary rounded-full shadow-lg shadow-primary/30 flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+</div>
+<button class="flex flex-col items-center gap-1 text-outline">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="text-[10px] font-bold">Stok</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-outline">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="text-[10px] font-bold">Cari</span>
+</button>
+</nav>
+</body></html>

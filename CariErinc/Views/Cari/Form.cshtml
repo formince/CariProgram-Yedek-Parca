@@ -1,0 +1,69 @@
+@model CariErinc.ViewModels.CariFormVM
+@{
+    var isEdit = Model.Id > 0;
+    ViewData["Title"] = isEdit ? "Cari Düzenle" : "Yeni Cari";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+    <h3 class="mb-0 fw-bold text-on-surface">@ViewData["Title"]</h3>
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Listeye Dön</a>
+</div>
+
+<form asp-action="Save" method="post">
+    @Html.AntiForgeryToken()
+    <input asp-for="Id" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Ad" class="form-label"></label>
+                    <input asp-for="Ad" class="form-control" />
+                    <span asp-validation-for="Ad" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="YetkiliKisi" class="form-label"></label>
+                    <input asp-for="YetkiliKisi" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Telefon" class="form-label"></label>
+                    <input asp-for="Telefon" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Adres" class="form-label"></label>
+                    <input asp-for="Adres" class="form-control" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label d-block">Roller</label>
+                    <div class="d-flex gap-4">
+                        <div class="form-check">
+                            <input asp-for="MusteriRol" class="form-check-input" />
+                            <label asp-for="MusteriRol" class="form-check-label"></label>
+                        </div>
+                        <div class="form-check">
+                            <input asp-for="TedarikciRol" class="form-check-input" />
+                            <label asp-for="TedarikciRol" class="form-check-label"></label>
+                        </div>
+                    </div>
+                    <small class="text-muted">En az bir rol seçmelisiniz.</small>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="AktifMi" class="form-check-input" />
+                        <label asp-for="AktifMi" class="form-check-label">Aktif</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Kaydet</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">İptal</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScripts" />
+}

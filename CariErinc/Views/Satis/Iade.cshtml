@@ -1,0 +1,61 @@
+@model SatisIadeVM
+@{
+    ViewData["Title"] = "Kısmi İade";
+}
+
+<div class="mb-4">
+    <h2>Kısmi İade Al</h2>
+    <p class="text-muted">Satış #@Model.SatisId içinden iade edilecek kalemleri seçiniz.</p>
+</div>
+
+<form asp-action="Iade" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="SatisId" />
+
+    <div class="table-wrapper mb-4">
+        <table class="table align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Ürün</th>
+                    <th class="text-center">Satılan</th>
+                    <th class="text-center">Önceki İade</th>
+                    <th class="text-center" style="width: 150px;">İade Adedi</th>
+                    <th class="text-end">Birim Fiyat</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Satirlar.Count; i++)
+                {
+                    var m = Model.Satirlar[i];
+                    var iadeEdilebilir = m.SatilanMiktar - m.OncekiIadeMiktar;
+                    <tr>
+                        <td>
+                            <input type="hidden" name="Satirlar[@i].SatisDetayId" value="@m.SatisDetayId" />
+                            <strong>@m.UrunAd</strong>
+                        </td>
+                        <td class="text-center">@m.SatilanMiktar</td>
+                        <td class="text-center text-danger">@m.OncekiIadeMiktar</td>
+                        <td>
+                            <input type="number" name="Satirlar[@i].IadeMiktar" class="form-control form-control-sm text-center" 
+                                   min="0" max="@iadeEdilebilir" value="0" @(iadeEdilebilir <= 0 ? "disabled" : "") />
+                        </td>
+                        <td class="text-end">@m.BirimFiyat.ToString("N2") ₺</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label asp-for="Neden" class="form-label">İade Nedeni</label>
+                <textarea asp-for="Neden" class="form-control" rows="2" placeholder="Sebebini buraya yazabilirsiniz..."></textarea>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-warning">🔄 İadeyi Tamamla</button>
+                <a asp-action="Detail" asp-route-id="@Model.SatisId" class="btn btn-outline-secondary">Vazgeç</a>
+            </div>
+        </div>
+    </div>
+</form>

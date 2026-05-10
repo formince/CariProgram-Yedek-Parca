@@ -1,0 +1,94 @@
+@model IEnumerable<CariErinc.Models.Satis>
+@{
+    ViewData["Title"] = "Bekleyen Sepetler";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h3 mb-0">📋 Bekleyen Sepetler</h2>
+        <p class="text-muted small mb-0">Henüz tamamlanmamış, beklemeye alınmış satışlar.</p>
+    </div>
+    <a asp-action="HizliSatis" class="btn btn-outline-primary">Hızlı Satışa Dön</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i> Bekleyen herhangi bir sepet bulunmuyor.
+    </div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tarih</th>
+                        <th>Müşteri</th>
+                        <th>Ürün Sayısı</th>
+                        <th class="text-end">Toplam Tutar</th>
+                        <th>Açıklama</th>
+                        <th class="text-end">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold">@s.Tarih.ToLocalTime().ToString("dd.MM.yyyy")</div>
+                                <div class="small text-muted">@s.Tarih.ToLocalTime().ToString("HH:mm")</div>
+                            </td>
+                            <td>
+                                @if (s.Musteri != null)
+                                {
+                                    <span class="badge bg-info text-dark">@($"{s.Musteri.Ad} {s.Musteri.Soyad}")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted italic">Peşin Müşteri</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary rounded-pill">@s.SatisDetaylari.Count kalem</span>
+                            </td>
+                            <td class="text-end fw-bold text-primary">
+                                @s.ToplamTutar.ToString("N2") ₺
+                            </td>
+                            <td>
+                                <small class="text-truncate d-inline-block" style="max-width: 150px;">@s.Aciklama</small>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="TaslakYukle" asp-route-id="@s.Id" class="btn btn-outline-success" title="Sepete Yükle">
+                                        🚀 Yükle
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger btn-delete" 
+                                            data-url="@Url.Action("TaslakSil", new { id = s.Id })"
+                                            data-title="Sepeti Sil"
+                                            data-text="Bu bekleyen sepeti silmek istediğinize emin misiniz?">
+                                        🗑️ Sil
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div class="mt-4">
+    <div class="card bg-light border-0">
+        <div class="card-body">
+            <h6 class="fw-bold"><i class="bi bi-lightbulb me-2 text-warning"></i>İpucu</h6>
+            <p class="small text-muted mb-0">
+                Bekleyen sepetler stok rezerve etmez. Satışı "Tamamla" dediğiniz anda güncel stoklar kontrol edilir ve düşülür.
+            </p>
+        </div>
+    </div>
+</div>

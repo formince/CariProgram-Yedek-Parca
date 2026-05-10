@@ -1,0 +1,195 @@
+@model Veresiye
+@{
+    ViewData["Title"] = $"Veresiye #{Model.Id}";
+    var kalanBorc = (decimal)ViewBag.KalanBorc;
+    var eldenMi = Model.Tip == CariErinc.Models.VeresiyeTipi.Elden;
+}
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-link text-decoration-none mb-2">← Veresiye listesine dön</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <!-- Veresiye Bilgileri -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <strong>Veresiye Bilgileri</strong>
+                @if (eldenMi)
+                {
+                    <span class="badge bg-info ms-2">💵 Elden</span>
+                }
+            </div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr>
+                        <td class="text-muted">Müşteri</td>
+                        <td>
+                            <a asp-controller="Cari" asp-action="Detail" asp-route-id="@(Model.CariId ?? Model.Musteri?.CariId)">
+                                @Model.Musteri?.Ad @Model.Musteri?.Soyad
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Tarih</td>
+                        <td>@Model.Tarih.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Toplam Tutar</td>
+                        <td class="fw-bold">@Model.Tutar.ToString("N2") ₺</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Kalan Borç</td>
+                        <td class="fw-bold @(kalanBorc > 0 ? "text-danger" : "text-success")">@kalanBorc.ToString("N2") ₺</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Durum</td>
+                        <td>
+                            @switch (Model.OdenmeDurumu)
+                            {
+                                case CariErinc.Models.OdenmeDurumu.Bekliyor:
+                                    <span class="badge bg-danger">Bekliyor</span>
+                                    break;
+                                case CariErinc.Models.OdenmeDurumu.KismiOdendi:
+                                    <span class="badge bg-warning text-dark">Kısmi Ödendi</span>
+                                    break;
+                                case CariErinc.Models.OdenmeDurumu.Odendi:
+                                    <span class="badge bg-success">Ödendi</span>
+                                    break;
+                                case CariErinc.Models.OdenmeDurumu.Iptal:
+                                    <span class="badge bg-secondary">İptal Edildi</span>
+                                    break;
+                            }
+                        </td>
+                    </tr>
+                    @if (!string.IsNullOrEmpty(Model.Aciklama))
+                    {
+                        <tr>
+                            <td class="text-muted">Açıklama</td>
+                            <td>@Model.Aciklama</td>
+                        </tr>
+                    }
+                </table>
+            </div>
+        </div>
+
+        @if (kalanBorc > 0)
+        {
+            <div class="card">
+                <div class="card-header"><strong>Ödeme Al</strong></div>
+                <div class="card-body">
+                    <form asp-action="Odeme" asp-route-id="@Model.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-2">
+                            <label for="tutar" class="form-label">Tutar (₺)</label>
+                            <input type="text" name="tutar" id="tutar" class="form-control input-para-tr" inputmode="decimal" value="@kalanBorc.ToString("N2")" required />
+                            <small class="text-muted">Maksimum: @kalanBorc.ToString("N2") ₺</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="aciklama" class="form-label">Açıklama</label>
+                            <textarea name="aciklama" id="aciklama" class="form-control" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">💰 Ödeme Al</button>
+                    </form>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-success mb-0">
+                ✅ Bu veresiye tamamen ödenmiş.
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-7">
+        @if (Model.Satis != null)
+        {
+            <!-- Bağlı Satış Detayı -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <strong>🛒 Bağlı Satış (#@Model.SatisId)</strong>
+                    <a asp-controller="Satis" asp-action="Detail" asp-route-id="@Model.SatisId" class="btn btn-sm btn-outline-secondary float-end">Satışa Git</a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Ürün</th>
+                                <th class="text-end">Miktar</th>
+                                <th class="text-end">Birim ₺</th>
+                                <th class="text-end">Toplam ₺</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in Model.Satis.SatisDetaylari)
+                            {
+                                <tr>
+                                    <td>@d.Urun?.Ad</td>
+                                    <td class="text-end">@d.Miktar</td>
+                                    <td class="text-end">@d.BirimFiyat.ToString("N2")</td>
+                                    <td class="text-end">@((d.Miktar * d.BirimFiyat).ToString("N2"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Ara Toplam:</strong></td>
+                                <td class="text-end">@Model.Satis.ToplamTutar.ToString("N2") ₺</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        }
+        else if (eldenMi)
+        {
+            <div class="card mb-3">
+                <div class="card-header"><strong>💵 Elden Veresiye</strong></div>
+                <div class="card-body">
+                    <p class="text-muted mb-0">Bu borç bir satışa bağlı değildir. Elden para verildiğinde oluşturulmuştur.</p>
+                </div>
+            </div>
+        }
+
+        <!-- Ödeme Geçmişi -->
+        <div class="card">
+            <div class="card-header"><strong>Ödeme Geçmişi</strong></div>
+            <div class="card-body p-0">
+                @if (!Model.Odemeler.Any())
+                {
+                    <div class="text-center text-muted p-4">Henüz ödeme yapılmadı.</div>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Tutar</th>
+                                <th>Açıklama</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var o in Model.Odemeler.OrderByDescending(x => x.OdemeTarihi))
+                            {
+                                <tr>
+                                    <td>@o.OdemeTarihi.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td class="text-success fw-bold">@o.OdemeTutari.ToString("N2") ₺</td>
+                                    <td class="text-muted">@(o.Aciklama ?? "-")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td class="text-end"><strong>Toplam Ödenen:</strong></td>
+                                <td class="text-success fw-bold">@Model.Odemeler.Sum(o => o.OdemeTutari).ToString("N2") ₺</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+</div>

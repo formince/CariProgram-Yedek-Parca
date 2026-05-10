@@ -1,0 +1,106 @@
+@model StokHareketVM
+@{
+    var isEdit = Model.Id > 0;
+    ViewData["Title"] = isEdit ? "Stok Hareketi Düzenle" : "Yeni Stok Hareketi";
+    var hareketTipleri = new List<SelectListItem>
+    {
+        new("📥 Giriş", "Giris"),
+        new("📤 Çıkış", "Cikis"),
+        new("🔄 İade", "Iade"),
+        new("📋 Sayım", "Sayim")
+    };
+}
+
+<div class="form-container-premium">
+    <!-- Page Header -->
+    <div class="row align-items-center mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 fs-xs">
+                    <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">Stok Hareketleri</a></li>
+                    <li class="breadcrumb-item active text-primary">@(isEdit ? "Düzenleme" : "Yeni Kayıt")</li>
+                </ol>
+            </nav>
+            <h2 class="h4 fw-bold mb-0 text-primary-container">
+                <span class="material-symbols-outlined align-middle me-1">inventory</span> 
+                @ViewData["Title"]
+            </h2>
+        </div>
+        <div class="col-auto">
+            <a asp-action="Index" class="btn btn-link text-muted text-decoration-none d-flex align-items-center gap-1 extra-small">
+                <span class="material-symbols-outlined fs-5">close</span> Kapat
+            </a>
+        </div>
+    </div>
+
+    <form asp-action="Save" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-4 p-3 bg-danger-container-low rounded-3 extra-small"></div>
+
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="form-card-premium shadow-sm">
+                    <div class="form-card-header">
+                        <span class="material-symbols-outlined text-primary fs-5">receipt_long</span>
+                        <h6>Hareket Detayları ve Kontrol</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label asp-for="UrunId" class="form-label-caps">Ürün Seçimi</label>
+                                <select asp-for="UrunId" asp-items="Model.UrunListesi" class="form-select form-select-ghost"></select>
+                                <span asp-validation-for="UrunId" class="text-danger small"></span>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label asp-for="HareketTipi" class="form-label-caps">İşlem Türü</label>
+                                <select asp-for="HareketTipi" asp-items="hareketTipleri" class="form-select form-select-ghost"></select>
+                                <span asp-validation-for="HareketTipi" class="text-danger small"></span>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="p-3 bg-surface-container-low rounded-4 border-start border-4 border-primary">
+                                    <label asp-for="Miktar" class="form-label-caps text-primary">İşlem Miktarı</label>
+                                    <div class="input-group">
+                                        <input asp-for="Miktar" type="number" min="0" class="form-control border-0 bg-transparent fw-bold" placeholder="0" />
+                                        <span class="input-group-text bg-transparent border-0 fw-bold">ADET</span>
+                                    </div>
+                                    <span asp-validation-for="Miktar" class="text-danger small"></span>
+                                </div>
+                                <div class="extra-small text-muted mt-1 px-2">Sayım dışındaki işlemler için en az 1 girilmelidir.</div>
+                            </div>
+
+                            @if (isEdit)
+                            {
+                                <div class="col-md-6">
+                                    <label asp-for="Tarih" class="form-label-caps">İşlem Tarihi</label>
+                                    <input asp-for="Tarih" type="datetime-local" class="form-control-ghost" />
+                                    <span asp-validation-for="Tarih" class="text-danger small"></span>
+                                </div>
+                            }
+                            
+                            <div class="col-12 mt-2">
+                                <label asp-for="Aciklama" class="form-label-caps">Açıklama / Not</label>
+                                <textarea asp-for="Aciklama" class="form-control-ghost" rows="3" placeholder="Hareket ile ilgili açıklama..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="form-actions-bar mt-2 shadow-sm rounded-4">
+                    <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined">save</span> 
+                        @(isEdit ? "Değişiklikleri Kaydet" : "Hareketi Kaydet")
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4 text-decoration-none">Vazgeç</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScripts" />
+}

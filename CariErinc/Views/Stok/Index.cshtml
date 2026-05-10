@@ -1,0 +1,125 @@
+@model StokHareketIndexVM
+@{
+    ViewData["Title"] = "Stok Hareketleri";
+    var urunListesi = ViewBag.UrunListesi as SelectList;
+}
+
+<!-- Page Header -->
+<div class="page-header mb-5">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <div class="p-3 bg-primary-container text-primary rounded-4 shadow-sm">
+                <span class="material-symbols-outlined fs-1">warehouse</span>
+            </div>
+        </div>
+        <div class="col">
+            <h1 class="h3 fw-bold mb-1 text-primary-container">Stok Hareketleri</h1>
+            <p class="text-muted mb-0">Giriş, çıkış ve ayarlamalar</p>
+        </div>
+        <div class="col-auto">
+            <a asp-action="Form" class="btn btn-lg btn-primary">
+                <span class="material-symbols-outlined me-2" style="vertical-align: middle; font-size: 1.25rem;">add</span>
+                Yeni Hareket
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Card -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Ürün</label>
+                <select name="urunId" class="form-select" asp-items="urunListesi"></select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Başlangıç</label>
+                <input type="date" name="baslangic" value="@Model.Baslangic?.ToString("yyyy-MM-dd")" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Bitiş</label>
+                <input type="date" name="bitis" value="@Model.Bitis?.ToString("yyyy-MM-dd")" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <span class="material-symbols-outlined me-1" style="vertical-align: middle; font-size: 1rem;">search</span>
+                    Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Hareketler.Any())
+{
+    <div class="table-wrapper mb-4">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Tarih</th>
+                    <th>Ürün</th>
+                    <th>Hareket Tipi</th>
+                    <th class="text-center">Miktar</th>
+                    <th>Açıklama</th>
+                    <th class="text-end">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var h in Model.Hareketler)
+                {
+                    <tr>
+                        <td class="small">@h.Tarih.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td class="fw-bold">@h.Urun?.Ad</td>
+                        <td>
+                            @switch (h.HareketTipi)
+                            {
+                                case HareketTipi.Giris:
+                                case HareketTipi.Iade:
+                                    <span class="badge bg-success-subtle text-success border border-success">@h.HareketTipi</span>
+                                    break;
+                                case HareketTipi.Cikis:
+                                    <span class="badge bg-danger-subtle text-danger border border-danger">Çıkış</span>
+                                    break;
+                                case HareketTipi.Sayim:
+                                    <span class="badge bg-primary-subtle text-primary border border-primary">Sayım</span>
+                                    break;
+                            }
+                        </td>
+                        <td class="fw-bold text-center">@h.Miktar</td>
+                        <td class="small text-muted">@(h.Aciklama ?? "-")</td>
+                        <td class="text-end text-nowrap">
+                            <div class="d-flex justify-content-end align-items-center gap-1">
+                                <a asp-action="Form" asp-route-id="@h.Id" class="btn-list-action btn-list-action-edit" title="Düzenle">
+                                    <span class="material-symbols-outlined">edit</span>
+                                </a>
+                                <button type="button" class="btn-list-action btn-list-action-delete btn-delete" 
+                                        data-url="@Url.Action("Sil", new { id = h.Id })"
+                                        data-title="Hareketi Sil"
+                                        data-text="Bu stok hareketini silmek istediğinize emin misiniz? Ürün stoğu yeniden hesaplanacaktır.">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("_Pagination", new PaginationInfo { 
+        CurrentPage = Model.CurrentPage, 
+        TotalPages = Model.TotalPages, 
+        RouteValues = new Dictionary<string, string> { 
+            { "urunId", Model.UrunId?.ToString() ?? "" },
+            { "baslangic", Model.Baslangic?.ToString("yyyy-MM-dd") ?? "" },
+            { "bitis", Model.Bitis?.ToString("yyyy-MM-dd") ?? "" }
+        } 
+    })
+}
+else
+{
+    <div class="alert alert-info border-0 shadow-sm mt-3">Stok hareketi bulunamadı veya arama kriterine uygun sonuç yok.</div>
+}

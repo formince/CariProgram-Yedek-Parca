@@ -1,0 +1,196 @@
+@model Satis
+@{
+    ViewData["Title"] = "Satış Detayı";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="form-container-premium py-4">
+    <!-- Header Area -->
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="fw-bold mb-0">Satış Detayı #@Model.Id</h4>
+            <div class="text-muted small">@Model.Tarih.ToLocalTime().ToString("dd.MM.yyyy HH:mm") tarihinde oluşturuldu</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-list-action" title="Listeye Dön">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <a asp-action="Fis" asp-route-id="@Model.Id" target="_blank" class="btn btn-list-action btn-list-action-view" title="Fiş Yazdır">
+                <span class="material-symbols-outlined">print</span>
+            </a>
+        </div>
+    </div>
+
+    @if (Model.IptalEdildi)
+    {
+        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="material-symbols-outlined">cancel</span>
+                <strong class="h5 mb-0">BU SATIŞ İPTAL EDİLMİŞTİR</strong>
+            </div>
+            <p class="mb-1"><strong>İptal Tarihi:</strong> @Model.IptalTarihi?.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</p>
+            @if (!string.IsNullOrEmpty(Model.IptalNedeni))
+            {
+                <p class="mb-0 small"><strong>Neden:</strong> @Model.IptalNedeni</p>
+            }
+        </div>
+    }
+
+    <!-- Info Card -->
+    <div class="form-card-premium p-4 mb-4">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <label class="form-label-caps">MÜŞTERİ</label>
+                <div class="h6 mb-0 fw-bold">
+                    @(Model.Musteri != null ? $"{Model.Musteri.Ad} {Model.Musteri.Soyad}".Trim() : "Peşin Müşteri")
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label-caps">ÖDEME TİPİ</label>
+                <div class="h6 mb-0">
+                    <span class="badge @(Model.OdemeTipi == OdemeTipi.Pesin ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning") rounded-pill px-3">
+                        @(Model.OdemeTipi == OdemeTipi.Pesin ? "Peşin" : "Veresiye")
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <label class="form-label-caps">TOPLAM TUTAR</label>
+                <div class="h4 mb-0 fw-bold text-primary">@Model.ToplamTutar.ToString("N2") ₺</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Card -->
+    <div class="form-card-premium">
+        <div class="form-card-header">
+            <span class="material-symbols-outlined text-primary">inventory_2</span>
+            <h6>SATILAN ÜRÜNLER</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Ürün</th>
+                        <th class="text-end" style="width: 100px;">Adet</th>
+                        <th class="text-end" style="width: 100px;">İade</th>
+                        <th class="text-end" style="width: 120px;">Birim Fiyat</th>
+                        <th class="text-end pe-4" style="width: 120px;">Net Tutar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in Model.SatisDetaylari)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-semibold">@(d.Urun?.Ad)</div>
+                                @if (d.IndirimOrani > 0)
+                                {
+                                    <div class="text-success small fw-medium">İndirim: %@d.IndirimOrani.ToString("G29")</div>
+                                }
+                            </td>
+                            <td class="text-end">@d.Miktar</td>
+                            <td class="text-end">
+                                @{
+                                    var iadeMiktari = d.SatisIadeDetaylari?.Sum(x => x.IadeMiktar) ?? 0;
+                                }
+                                @if (iadeMiktari > 0)
+                                {
+                                    <span class="text-danger fw-medium">-@iadeMiktari</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">0</span>
+                                }
+                            </td>
+                            <td class="text-end">@d.BirimFiyat.ToString("N2") ₺</td>
+                            <td class="text-end pe-4 fw-bold">@d.NetTutar.ToString("N2") ₺</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Totals Footer inside the card -->
+        @{
+            var araToplam = Model.SatisDetaylari.Sum(d => d.NetTutar);
+            var kdvToplam = Model.SatisDetaylari.Sum(d => d.KdvTutari);
+            var iadeToplam = Model.SatisIadeler.SelectMany(x => x.IadeDetaylari).Sum(x => x.IadeTutari);
+            var netOdenecek = Model.ToplamTutar - iadeToplam;
+            var toplamSatirIndirimi = Model.SatisDetaylari.Sum(d => d.IndirimTutari);
+        }
+        <div class="p-4 border-top bg-light-subtle">
+            <div class="row justify-content-end">
+                <div class="col-md-5 col-lg-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">Brüt Toplam</span>
+                        <span class="fw-medium">@Model.SatisDetaylari.Sum(d => d.Miktar * d.BirimFiyat).ToString("N2") ₺</span>
+                    </div>
+                    @if (toplamSatirIndirimi > 0)
+                    {
+                        <div class="d-flex justify-content-between mb-2 text-success">
+                            <span class="small">Satır İndirimleri</span>
+                            <span>-@toplamSatirIndirimi.ToString("N2") ₺</span>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-between mb-2 pb-2 border-bottom">
+                        <span class="text-muted small">Ara Toplam</span>
+                        <span class="fw-medium">@araToplam.ToString("N2") ₺</span>
+                    </div>
+                    @if (Model.GenelIndirimTutari > 0)
+                    {
+                        <div class="d-flex justify-content-between mb-2 text-success">
+                            <span class="small">Genel İndirim (%@Model.GenelIndirimOrani.ToString("G29"))</span>
+                            <span>-@Model.GenelIndirimTutari.ToString("N2") ₺</span>
+                        </div>
+                    }
+                    @if (kdvToplam > 0)
+                    {
+                        <div class="d-flex justify-content-between mb-2 text-muted small">
+                            <span>KDV Toplamı</span>
+                            <span>@kdvToplam.ToString("N2") ₺</span>
+                        </div>
+                    }
+                    <div class="d-flex justify-content-between mb-0 pt-2 h5 fw-bold text-primary">
+                        <span>SATIŞ TOPLAMI</span>
+                        <span>@Model.ToplamTutar.ToString("N2") ₺</span>
+                    </div>
+                    
+                    @if (iadeToplam > 0)
+                    {
+                        <div class="d-flex justify-content-between mt-2 pt-2 border-top text-danger fw-bold">
+                            <span>TOPLAM İADE</span>
+                            <span>-@iadeToplam.ToString("N2") ₺</span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2 bg-primary-subtle p-2 rounded text-primary fw-bold h5 mb-0">
+                            <span>NET ÖDENEN</span>
+                            <span>@netOdenecek.ToString("N2") ₺</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.IptalEdildi)
+    {
+        <!-- Actions Bar -->
+        <div class="form-actions-bar mt-4 justify-content-end shadow-none border">
+            <a asp-action="Iade" asp-route-id="@Model.Id" class="btn btn-outline-warning rounded-pill px-4 d-flex align-items-center gap-2">
+                <span class="material-symbols-outlined">keyboard_return</span>
+                Kısmi İade
+            </a>
+            <a asp-action="Form" asp-route-id="@Model.Id" class="btn btn-outline-primary rounded-pill px-4 d-flex align-items-center gap-2">
+                <span class="material-symbols-outlined">edit</span>
+                Düzenle
+            </a>
+            <button type="button" class="btn btn-outline-danger rounded-pill px-4 d-flex align-items-center gap-2 btn-delete" 
+                    data-url="@Url.Action("Sil", new { id = Model.Id })"
+                    data-title="Satış İptali"
+                    data-text="Bu satışı tamamen iptal etmek istediğinize emin misiniz? Tüm stok ve finansal hareketler geri alınacaktır.">
+                <span class="material-symbols-outlined">delete</span>
+                Satışı İptal Et
+            </button>
+        </div>
+    }
+</div>

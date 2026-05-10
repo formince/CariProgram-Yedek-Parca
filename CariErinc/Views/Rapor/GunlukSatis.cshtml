@@ -1,0 +1,89 @@
+@model GunlukSatisRaporVM
+@{
+    ViewData["Title"] = "Günlük Satış Raporu";
+    var secilenTarih = ViewBag.SecilenTarih as string ?? DateTime.Today.ToString("yyyy-MM-dd");
+}
+
+<!-- Filter Card -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" asp-controller="Rapor" asp-action="Gunluk" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label for="tarih" class="form-label small fw-bold">Tarih</label>
+                <input type="date" id="tarih" name="tarih" value="@secilenTarih" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <span class="material-symbols-outlined me-1" style="vertical-align: middle; font-size: 1rem;">visibility</span>
+                    Görüntüle
+                </button>
+            </div>
+            <div class="col-md-3">
+                <a asp-action="GunlukExcel" asp-route-tarih="@secilenTarih" class="btn btn-success w-100">
+                    <span class="material-symbols-outlined me-1" style="vertical-align: middle; font-size: 1rem;">download</span>
+                    Excel Dışa Aktar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-sm-6 col-md-4">
+        <div class="card border-0 shadow-premium rounded-4 h-100 bg-white">
+            <div class="card-body p-4">
+                <div class="text-muted extra-small text-uppercase fw-bold ls-wide">Toplam Gelir</div>
+                <div class="h3 text-success fw-bold mb-0">@Model.ToplamGelir.ToTrParaMoney()</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-4">
+        <div class="card border-0 shadow-premium rounded-4 h-100 bg-white">
+            <div class="card-body p-4">
+                <div class="text-muted extra-small text-uppercase fw-bold ls-wide">Toplam Gider</div>
+                <div class="h3 text-danger fw-bold mb-0">@Model.ToplamGider.ToTrParaMoney()</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-4">
+        <div class="card border-0 shadow-premium rounded-4 h-100 bg-white">
+            <div class="card-body p-4">
+                <div class="text-muted extra-small text-uppercase fw-bold ls-wide">Net Kâr</div>
+                <div class="h3 fw-bold mb-0 @(Model.NetKar >= 0 ? "text-success" : "text-danger")">@Model.NetKar.ToTrParaMoney()</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.KasaHareketler.Any())
+{
+    <div class="table-wrapper mb-4">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Saat</th>
+                    <th>Kategori</th>
+                    <th>Açıklama</th>
+                    <th class="text-end">Tutar</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var h in Model.KasaHareketler)
+                {
+                    <tr>
+                        <td>@h.Tarih.ToString("HH:mm")</td>
+                        <td>@h.Kategori</td>
+                        <td><span class="text-muted small">@(h.Aciklama ?? "-")</span></td>
+                        <td class="text-success fw-bold text-end">@h.Tutar.ToTrParaMoney()</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">Bu tarihte gelir kaydı bulunamadı.</div>
+}

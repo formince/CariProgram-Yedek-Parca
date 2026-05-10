@@ -1,0 +1,536 @@
+@model SatisVM
+@{
+    bool isEdit = Model.Id > 0;
+    ViewData["Title"] = isEdit ? "Satışı Düzenle" : "Yeni Satış";
+    
+    var urunlerJson = ViewBag.Urunler as string ?? "[]";
+    var urunFiyatlari = ViewData["UrunFiyatlari"] as string ?? "{}";
+    var seciliMusteriAd = ViewBag.SeciliMusteriAd as string ?? "";
+    
+    var urlBarkodAra = Url.Action("BarkodAra", "Satis");
+    var urlUrunAraMetin = Url.Action("UrunAraMetin", "Satis");
+    var urlMusteriAra = Url.Action("MusteriAra", "Satis");
+    var varsayilanKdv = ViewBag.VarsayilanKdv ?? 20;
+
+    // SelectList fallback for Create mode
+    var urunSelectItems = ViewBag.UrunListesi as SelectList ?? new SelectList(Enumerable.Empty<SelectListItem>());
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>@(isEdit ? $"📝 Satışı Düzenle (#{@Model.Id})" : "✨ Yeni Satış")</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">⬅️ Listeye Dön</a>
+</div>
+
+<form asp-action="Save" method="post" id="satisForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="GenelIndirimTutari" id="GenelIndirimTutariHidden" />
+    <input type="hidden" asp-for="HedefToplam" id="HedefToplamHidden" />
+    
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="row g-4">
+        <!-- Sol Kolon: Ürünler ve Sepet -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <div class="mb-3 d-flex gap-2 align-items-end">
+                        <div class="flex-grow-1">
+                            <label for="barkodInput" class="form-label fw-bold">Ürün Ekle (Barkod veya İsim)</label>
+                            <input type="text" id="barkodInput" class="form-control form-control-lg" placeholder="Barkod okutun veya yazıp Enter'a basın" autofocus autocomplete="off" />
+                        </div>
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#urunAraModal">🔍 Ürün Bul</button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="satisTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 30%;">Ürün</th>
+                                    <th style="width: 10%;">Miktar</th>
+                                    <th style="width: 15%;">Birim Fiyat</th>
+                                    <th style="width: 10%;">İndirim %</th>
+                                    <th style="width: 15%;">Net Tutar</th>
+                                    <th style="width: 10%;" class="text-end">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="satirlarBody">
+                                @if (isEdit)
+                                {
+                                    <!-- Edit modunda JS tarafı render edecek (renderEditRows) -->
+                                }
+                                else
+                                {
+                                    @for (var i = 0; i < Model.Satirlar.Count; i++)
+                                    {
+                                        <tr class="satir-row">
+                                            <td>
+                                                <div class="urun-bilgi">
+                                                    <strong class="urun-ad">-- Ürün Seçin --</strong><br>
+                                                    <small class="text-muted urun-barkod">-</small>
+                                                </div>
+                                                <input type="hidden" name="Satirlar[@i].UrunId" class="urun-select" value="@Model.Satirlar[i].UrunId" />
+                                            </td>
+                                            <td>
+                                                <input type="number" name="Satirlar[@i].Miktar" class="form-control form-control-sm miktar-input" min="1" step="1" value="@Model.Satirlar[i].Miktar" required />
+                                            </td>
+                                            <td>
+                                                <input name="Satirlar[@i].BirimFiyat" class="form-control form-control-sm BirimFiyat input-para-tr" type="text" inputmode="decimal" autocomplete="off" value="@Model.Satirlar[i].BirimFiyat.ToTrPara()" required />
+                                            </td>
+                                            <td>
+                                                <input name="Satirlar[@i].IndirimOrani" class="form-control form-control-sm IndirimOrani" type="text" inputmode="decimal" autocomplete="off" value="@Model.Satirlar[i].IndirimOrani.ToTrPara()" />
+                                            </td>
+                                            <td>
+                                                <input class="form-control form-control-sm NetTutar net-tutar-input input-para-tr" type="text" inputmode="decimal" autocomplete="off" value="0,00" />
+                                                <input type="hidden" name="Satirlar[@i].KdvOrani" class="kdv-input" value="@Model.Satirlar[i].KdvOrani" />
+                                            </td>
+                                            <td class="text-end">
+                                                <button type="button" class="btn btn-sm btn-outline-danger satir-sil">🗑️</button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="btnSatirEkle">➕ Satır Ekle</button>
+                    <div id="sepetBos" class="alert alert-info mt-3" style="display:none;">Sepette ürün bulunmuyor.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ Kolon: Müşteri, Ödeme ve Toplamlar -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 1rem; z-index: 1020;">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-4 border-bottom pb-2">Satış Detayları</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ödeme Tipi</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input asp-for="OdemeTipi" type="radio" value="@OdemeTipi.Pesin" class="form-check-input" id="tipPesin" />
+                                <label class="form-check-label" for="tipPesin">Peşin</label>
+                            </div>
+                            <div class="form-check">
+                                <input asp-for="OdemeTipi" type="radio" value="@OdemeTipi.Veresiye" class="form-check-input" id="tipVeresiye" />
+                                <label class="form-check-label" for="tipVeresiye">Veresiye</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4" id="musteriGroup" style="@(Model.OdemeTipi == OdemeTipi.Pesin ? "display:none;" : "")">
+                        <label for="musteriAraInput" class="form-label fw-bold">Cari (Müşteri)</label>
+                        <div class="position-relative">
+                            <input type="text" id="musteriAraInput" class="form-control" placeholder="Cari ara..." autocomplete="off" value="@seciliMusteriAd" />
+                            <div id="musteriAraSonuc" class="list-group position-absolute w-100 shadow-sm" style="z-index:1000; max-height:220px; overflow-y:auto; display:none;"></div>
+                        </div>
+                        <input type="hidden" asp-for="MusteriId" id="musteriId" />
+                        <small id="musteriSecildi" class="text-success fw-semibold mt-1 d-block" style="@(string.IsNullOrEmpty(seciliMusteriAd) ? "display:none;" : "")">
+                            ✓ @seciliMusteriAd
+                        </small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Aciklama" class="form-label fw-bold">Açıklama</label>
+                        <textarea asp-for="Aciklama" class="form-control" rows="2" placeholder="Notlar..."></textarea>
+                    </div>
+
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Ara Toplam:</span>
+                                <span id="AraToplamDisplay" class="fw-bold">0,00 ₺</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small fw-bold text-uppercase">Genel İndirim</span>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <input type="radio" class="btn-check" name="indirimModu" id="modYuzde" value="yuzde" @(Model.GenelIndirimModu == GenelIndirimModu.Yuzde ? "checked" : "") />
+                                        <label class="btn btn-outline-secondary" for="modYuzde">%</label>
+                                        <input type="radio" class="btn-check" name="indirimModu" id="modManuel" value="manuel" @(Model.GenelIndirimModu == GenelIndirimModu.ManuelHedefToplam ? "checked" : "") />
+                                        <label class="btn btn-outline-secondary" for="modManuel">₺</label>
+                                    </div>
+                                </div>
+                                <div id="indirimYuzdeSec" style="@(Model.GenelIndirimModu == GenelIndirimModu.Yuzde ? "" : "display:none;")">
+                                    <div class="input-group input-group-sm">
+                                        <input asp-for="GenelIndirimOrani" class="form-control text-end input-para-tr" id="GenelIndirimOraniInput" />
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <div id="indirimManuelSec" style="@(Model.GenelIndirimModu == GenelIndirimModu.ManuelHedefToplam ? "" : "display:none;")">
+                                    <div class="input-group input-group-sm">
+                                        <input id="ToplamTutarInput" type="text" class="form-control text-end input-para-tr" placeholder="Hedef toplam tutar..." />
+                                        <span class="input-group-text">₺</span>
+                                    </div>
+                                    <small class="text-muted d-block mt-1" id="indirimEfektifOran"></small>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between text-danger mb-2" id="indirimSatiri" style="display:none;">
+                                <span id="indirimSatiriLabel" class="small">İndirim</span>
+                                <span id="GenelIndirimTutarDisplay" class="fw-semibold small">-0,00 ₺</span>
+                            </div>
+
+                            <hr />
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="h5 mb-0 fw-bold">TOPLAM</span>
+                                <span id="ToplamTutarDisplay" class="h4 mb-0 text-primary fw-bold">0,00 ₺</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100 shadow-sm py-3 fw-bold" id="btnTamamla">
+                        @(isEdit ? "💾 DEĞİŞİKLİKLERİ KAYDET" : "🛒 SATIŞI TAMAMLA")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Ürün Seçim Modalı -->
+<div class="modal fade" id="urunAraModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">📦 Ürün Ara</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="text" id="urunAraInput" class="form-control form-control-lg mb-3" placeholder="İsim veya barkod ile arayın..." autocomplete="off" />
+                <div id="urunAraSonuc" class="list-group list-group-flush border rounded" style="max-height: 400px; overflow-y: auto;"></div>
+                <p class="text-muted small mt-2 mb-0" id="urunAraYardim">Sonuca tıklayarak satıra ekleyin.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScripts" />
+    <script src="~/js/satis-urun-arama.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            // Server-side veriler
+            const isEdit = @(isEdit ? "true" : "false");
+            const config = {
+                urls: {
+                    barkodAra: '@Html.Raw(urlBarkodAra)',
+                    urunAra: '@Html.Raw(urlUrunAraMetin)',
+                    musteriAra: '@Html.Raw(urlMusteriAra)'
+                },
+                varsayilanKdv: @varsayilanKdv,
+                urunFiyatlari: @Html.Raw(urunFiyatlari),
+                initialSatirlar: @Html.Raw(isEdit ? System.Text.Json.JsonSerializer.Serialize(Model.Satirlar.Select(s => new {
+                    urunId = s.UrunId,
+                    miktar = s.Miktar,
+                    birimFiyat = s.BirimFiyat,
+                    indirimOrani = s.IndirimOrani,
+                    kdvOrani = s.KdvOrani
+                })) : "[]"),
+                initialUrunler: @Html.Raw(urunlerJson)
+            };
+
+            let satirIndex = @Model.Satirlar.Count;
+            let currentIndirimModu = '@(Model.GenelIndirimModu == GenelIndirimModu.ManuelHedefToplam ? "manuel" : "yuzde")';
+            let satirlar = [];
+
+            // DOM Elemanları
+            const el = {
+                form: document.getElementById('satisForm'),
+                satirlarBody: document.getElementById('satirlarBody'),
+                barkodInput: document.getElementById('barkodInput'),
+                musteriAraInput: document.getElementById('musteriAraInput'),
+                musteriAraSonuc: document.getElementById('musteriAraSonuc'),
+                musteriId: document.getElementById('musteriId'),
+                musteriSecildi: document.getElementById('musteriSecildi'),
+                araToplamDisplay: document.getElementById('AraToplamDisplay'),
+                toplamDisplay: document.getElementById('ToplamTutarDisplay'),
+                indirimOraniInput: document.getElementById('GenelIndirimOraniInput'),
+                toplamTutarInput: document.getElementById('ToplamTutarInput'),
+                indirimTutariHidden: document.getElementById('GenelIndirimTutariHidden'),
+                hedefToplamHidden: document.getElementById('HedefToplamHidden'),
+                indirimSatiri: document.getElementById('indirimSatiri'),
+                indirimSatiriLabel: document.getElementById('indirimSatiriLabel'),
+                indirimTutariDisplay: document.getElementById('GenelIndirimTutarDisplay'),
+                indirimEfektif: document.getElementById('indirimEfektifOran'),
+                indirimYuzdeSec: document.getElementById('indirimYuzdeSec'),
+                indirimManuelSec: document.getElementById('indirimManuelSec'),
+                urunAraInput: document.getElementById('urunAraInput'),
+                urunAraSonuc: document.getElementById('urunAraSonuc'),
+                urunAraModal: document.getElementById('urunAraModal'),
+                sepetBos: document.getElementById('sepetBos')
+            };
+
+            // Helpers (Merkezi CariErincPara kullanılıyor)
+            const para = {
+                parse: (v) => window.CariErincPara?.parseOrZero(v) ?? 0,
+                format: (n) => window.CariErincPara?.format(n) ?? n.toFixed(2),
+                fromApi: (v) => window.CariErincPara?.fromApi(v) ?? (parseFloat(v) || 0)
+            };
+
+            // Init Edit Mode
+            if (isEdit) {
+                satirlar = config.initialSatirlar.map(s => {
+                    const u = config.initialUrunler.find(x => x.id === s.urunId);
+                    return {
+                        ...s,
+                        ad: u ? u.ad : ('Ürün #' + s.urunId),
+                        barkod: u ? u.barkod : '',
+                        birimFiyat: para.fromApi(s.birimFiyat)
+                    };
+                });
+                renderEditRows();
+            }
+
+            // Calculation Logic
+            function hesapla() {
+                let araToplam = 0;
+                
+                // Tr bazlı satırları oku
+                document.querySelectorAll('.satir-row').forEach(tr => {
+                    const miktar = para.parse(tr.querySelector('.miktar-input').value);
+                    const bf = para.parse(tr.querySelector('.BirimFiyat').value);
+                    const ind = para.parse(tr.querySelector('.IndirimOrani').value);
+                    
+                    const netBirim = bf * (1 - (ind / 100));
+                    const netSatir = miktar * netBirim;
+                    
+                    const netInput = tr.querySelector('.NetTutar');
+                    if (netInput) netInput.value = para.format(netSatir);
+                    
+                    araToplam += netSatir;
+                });
+
+                let genelIndOran = 0;
+                let genelIndTutar = 0;
+                let genelToplam = araToplam;
+
+                if (currentIndirimModu === 'yuzde') {
+                    genelIndOran = para.parse(el.indirimOraniInput.value);
+                    if (genelIndOran > 100) genelIndOran = 100;
+                    genelIndTutar = araToplam * (genelIndOran / 100);
+                    genelToplam = araToplam - genelIndTutar;
+                    if (el.toplamTutarInput) el.toplamTutarInput.value = para.format(genelToplam);
+                } else {
+                    genelToplam = para.parse(el.toplamTutarInput.value);
+                    if (genelToplam > araToplam) genelToplam = araToplam;
+                    genelIndTutar = araToplam - genelToplam;
+                    genelIndOran = araToplam > 0 ? (genelIndTutar / araToplam) * 100 : 0;
+                    if (el.indirimOraniInput) el.indirimOraniInput.value = para.format(0);
+                    if (el.indirimEfektif) {
+                        el.indirimEfektif.textContent = genelIndOran > 0.005 ? `Efektif İndirim: %${para.format(genelIndOran)}` : '';
+                    }
+                }
+
+                // Update UI
+                el.araToplamDisplay.textContent = para.format(araToplam) + ' ₺';
+                el.toplamDisplay.textContent = para.format(genelToplam) + ' ₺';
+                
+                if (genelIndTutar > 0.005) {
+                    el.indirimSatiri.style.display = 'flex';
+                    el.indirimSatiriLabel.textContent = `İndirim (%${para.format(genelIndOran)})`;
+                    el.indirimTutariDisplay.textContent = `-${para.format(genelIndTutar)} ₺`;
+                } else {
+                    el.indirimSatiri.style.display = 'none';
+                }
+
+                // Update Hidden Fields
+                el.indirimTutariHidden.value = para.format(genelIndTutar);
+                el.hedefToplamHidden.value = para.format(genelToplam);
+                
+                el.sepetBos.style.display = document.querySelectorAll('.satir-row').length === 0 ? 'block' : 'none';
+                document.getElementById('btnTamamla').disabled = document.querySelectorAll('.satir-row').length === 0;
+            }
+
+            // Events: Rows
+            el.satirlarBody.addEventListener('click', (e) => {
+                const btn = e.target.closest('.satir-sil');
+                if (btn) {
+                    const row = btn.closest('tr');
+                    if (document.querySelectorAll('.satir-row').length > 1 || isEdit) {
+                        row.remove();
+                        yenidenIndexle();
+                        hesapla();
+                    }
+                }
+            });
+
+             el.satirlarBody.addEventListener('change', (e) => {
+                // Dropdown kaldırıldığı için bu event tetiklenmeyecek ama yapıyı bozmamak adına boş bırakıldı.
+             });
+
+            el.satirlarBody.addEventListener('input', (e) => {
+                if (e.target.classList.contains('miktar-input') || e.target.classList.contains('BirimFiyat') || e.target.classList.contains('IndirimOrani')) {
+                    hesapla();
+                }
+                if (e.target.classList.contains('net-tutar-input')) {
+                    const row = e.target.closest('tr');
+                    row.querySelector('.IndirimOrani').value = '0';
+                    hesapla();
+                }
+            });
+
+            // Events: Global Discounts
+            document.querySelectorAll('input[name="indirimModu"]').forEach(r => {
+                r.addEventListener('change', (e) => {
+                    currentIndirimModu = e.target.value;
+                    el.indirimYuzdeSec.style.display = currentIndirimModu === 'yuzde' ? 'block' : 'none';
+                    el.indirimManuelSec.style.display = currentIndirimModu === 'manuel' ? 'block' : 'none';
+                    hesapla();
+                });
+            });
+
+            el.indirimOraniInput.addEventListener('input', hesapla);
+            el.toplamTutarInput.addEventListener('input', hesapla);
+
+            // Müşteri Arama
+            let musteriTimer = null;
+            el.musteriAraInput.addEventListener('input', () => {
+                clearTimeout(musteriTimer);
+                const q = el.musteriAraInput.value.trim();
+                el.musteriId.value = '';
+                el.musteriSecildi.style.display = 'none';
+                
+                if (q.length < 1) { el.musteriAraSonuc.style.display = 'none'; return; }
+                
+                musteriTimer = setTimeout(async () => {
+                    const res = await fetch(`${config.urls.musteriAra}?q=${encodeURIComponent(q)}`);
+                    const data = await res.json();
+                    el.musteriAraSonuc.innerHTML = '';
+                    if (data.length) {
+                        data.forEach(m => {
+                            const b = document.createElement('button');
+                            b.type = 'button';
+                            b.className = 'list-group-item list-group-item-action';
+                            b.textContent = m.ad;
+                            b.onclick = () => {
+                                el.musteriId.value = m.id;
+                                el.musteriAraInput.value = m.ad;
+                                el.musteriSecildi.textContent = '✓ ' + m.ad;
+                                el.musteriSecildi.style.display = 'block';
+                                el.musteriAraSonuc.style.display = 'none';
+                            };
+                            el.musteriAraSonuc.appendChild(b);
+                        });
+                        el.musteriAraSonuc.style.display = 'block';
+                    } else {
+                        el.musteriAraSonuc.innerHTML = '<div class="list-group-item text-muted">Müşteri bulunamadı</div>';
+                        el.musteriAraSonuc.style.display = 'block';
+                    }
+                }, 300);
+            });
+
+            // Core Actions
+            function sepeteEkle(urun) {
+                // Find empty row or add new
+                let row = null;
+                document.querySelectorAll('.satir-row').forEach(tr => {
+                    const select = tr.querySelector('.urun-select');
+                    if (!select.value) row = tr;
+                });
+
+                if (!row) {
+                    satirEkle();
+                    row = el.satirlarBody.lastElementChild;
+                }
+
+                row.querySelector('.urun-select').value = urun.id;
+                row.querySelector('.urun-ad').textContent = urun.ad;
+                row.querySelector('.urun-barkod').textContent = urun.barkod || '-';
+                
+                row.querySelector('.BirimFiyat').value = para.format(para.fromApi(urun.birimFiyat));
+                row.querySelector('.kdv-input').value = urun.kdvOrani || config.varsayilanKdv;
+                row.querySelector('.miktar-input').focus();
+                hesapla();
+            }
+
+            if (window.CariErincSatisUrunArama) {
+                window.CariErincSatisUrunArama.init({
+                    urls: { barkodAra: config.urls.barkodAra, urunAraMetin: config.urls.urunAra },
+                    urunAraMetinLimitBarkodSonrasi: 50,
+                    elements: {
+                        barkodInput: el.barkodInput,
+                        urunAraModal: el.urunAraModal,
+                        urunAraInput: el.urunAraInput,
+                        urunAraSonuc: el.urunAraSonuc,
+                        urunAraYardim: document.getElementById('urunAraYardim')
+                    },
+                    onProductPicked: sepeteEkle
+                });
+            }
+
+            function satirEkle() {
+                const tr = document.createElement('tr');
+                tr.className = 'satir-row';
+
+                tr.innerHTML = `
+                    <td>
+                        <div class="urun-bilgi">
+                            <strong class="urun-ad">-- Ürün Seçin --</strong><br>
+                            <small class="text-muted urun-barkod">-</small>
+                        </div>
+                        <input type="hidden" name="Satirlar[${satirIndex}].UrunId" class="urun-select" value="" />
+                    </td>
+                    <td><input type="number" name="Satirlar[${satirIndex}].Miktar" class="form-control form-control-sm miktar-input" min="1" step="1" value="1" required /></td>
+                    <td><input type="text" name="Satirlar[${satirIndex}].BirimFiyat" class="form-control form-control-sm BirimFiyat input-para-tr" value="0,00" required /></td>
+                    <td><input type="text" name="Satirlar[${satirIndex}].IndirimOrani" class="form-control form-control-sm IndirimOrani" value="0" /></td>
+                    <td><input class="form-control form-control-sm NetTutar net-tutar-input input-para-tr" type="text" value="0,00" />
+                        <input type="hidden" name="Satirlar[${satirIndex}].KdvOrani" class="kdv-input" value="0" /></td>
+                    <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger satir-sil">🗑️</button></td>
+                `;
+                el.satirlarBody.appendChild(tr);
+                satirIndex++;
+                if (window.CariErincPara?.initInputs) window.CariErincPara.initInputs(tr);
+            }
+
+            function yenidenIndexle() {
+                document.querySelectorAll('.satir-row').forEach((tr, i) => {
+                    tr.querySelector('.urun-select').name = `Satirlar[${i}].UrunId`;
+                    tr.querySelector('.miktar-input').name = `Satirlar[${i}].Miktar`;
+                    tr.querySelector('.BirimFiyat').name = `Satirlar[${i}].BirimFiyat`;
+                    tr.querySelector('.IndirimOrani').name = `Satirlar[${i}].IndirimOrani`;
+                    tr.querySelector('.kdv-input').name = `Satirlar[${i}].KdvOrani`;
+                });
+                satirIndex = document.querySelectorAll('.satir-row').length;
+            }
+
+            function renderEditRows() {
+                el.satirlarBody.innerHTML = '';
+                satirlar.forEach((s, i) => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'satir-row';
+                    tr.innerHTML = `
+                        <td>
+                            <div class="urun-bilgi">
+                                <strong class="urun-ad">${s.ad}</strong><br>
+                                <small class="text-muted urun-barkod">${s.barkod || '-'}</small>
+                            </div>
+                            <input type="hidden" name="Satirlar[${i}].UrunId" class="urun-select" value="${s.urunId}" />
+                        </td>
+                        <td><input type="number" name="Satirlar[${i}].Miktar" class="form-control form-control-sm miktar-input" min="1" step="1" value="${s.miktar}" required /></td>
+                        <td><input type="text" name="Satirlar[${i}].BirimFiyat" class="form-control form-control-sm BirimFiyat input-para-tr" value="${para.format(s.birimFiyat)}" required /></td>
+                        <td><input type="text" name="Satirlar[${i}].IndirimOrani" class="form-control form-control-sm IndirimOrani" value="${para.format(s.indirimOrani)}" /></td>
+                        <td><input class="form-control form-control-sm NetTutar net-tutar-input input-para-tr" type="text" value="0,00" />
+                            <input type="hidden" name="Satirlar[${i}].KdvOrani" class="kdv-input" value="${s.kdvOrani}" /></td>
+                        <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger satir-sil">🗑️</button></td>
+                    `;
+                    el.satirlarBody.appendChild(tr);
+                });
+                satirIndex = satirlar.length;
+                if (window.CariErincPara?.initInputs) window.CariErincPara.initInputs(el.satirlarBody);
+            }
+
+            document.getElementById('btnSatirEkle').onclick = satirEkle;
+            document.querySelectorAll('input[name="OdemeTipi"]').forEach(r => {
+                r.onchange = (e) => {
+                    document.getElementById('musteriGroup').style.display = e.target.value === 'Veresiye' ? 'block' : 'none';
+                };
+            });
+
+            // Initial calculate
+            setTimeout(hesapla, 100);
+        })();
+    </script>
+}

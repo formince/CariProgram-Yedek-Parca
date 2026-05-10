@@ -1,0 +1,107 @@
+@model AylikRaporVM
+@{
+    ViewData["Title"] = "Aylık Gelir/Gider";
+    var secilenYil = ViewBag.SecilenYil ?? DateTime.Today.Year;
+    var secilenAy = ViewBag.SecilenAy ?? DateTime.Today.Month;
+    var aylar = new[] { "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık" };
+}
+
+<!-- Filter Card -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" asp-controller="Rapor" asp-action="Aylik" class="row g-2 align-items-end">
+            <div class="col-md-2">
+                <label for="yil" class="form-label small fw-bold">Yıl</label>
+                <select id="yil" name="yil" class="form-select">
+                    @for (var y = DateTime.Today.Year; y >= DateTime.Today.Year - 5; y--)
+                    {
+                        <option value="@y" selected="@(y == secilenYil)">@y</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="ay" class="form-label small fw-bold">Ay</label>
+                <select id="ay" name="ay" class="form-select">
+                    @for (var a = 1; a <= 12; a++)
+                    {
+                        <option value="@a" selected="@(a == secilenAy)">@aylar[a - 1]</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <span class="material-symbols-outlined me-1" style="vertical-align: middle; font-size: 1rem;">visibility</span>
+                    Görüntüle
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a asp-action="AylikExcel" asp-route-yil="@secilenYil" asp-route-ay="@secilenAy" class="btn btn-success w-100">
+                    <span class="material-symbols-outlined me-1" style="vertical-align: middle; font-size: 1rem;">download</span>
+                    Excel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-sm-6 col-md-4">
+        <div class="card border-0 shadow-premium rounded-4 h-100 bg-white">
+            <div class="card-body p-4">
+                <div class="text-muted extra-small text-uppercase fw-bold ls-wide">Aylık Gelir</div>
+                <div class="h3 text-success fw-bold mb-0">@Model.AylikGelir.ToTrParaMoney()</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-4">
+        <div class="card border-0 shadow-premium rounded-4 h-100 bg-white">
+            <div class="card-body p-4">
+                <div class="text-muted extra-small text-uppercase fw-bold ls-wide">Aylık Gider</div>
+                <div class="h3 text-danger fw-bold mb-0">@Model.AylikGider.ToTrParaMoney()</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-4">
+        <div class="card border-0 shadow-premium rounded-4 h-100 bg-white">
+            <div class="card-body p-4">
+                <div class="text-muted extra-small text-uppercase fw-bold ls-wide">Net Bakiye</div>
+                <div class="h3 fw-bold mb-0 @(Model.NetBakiye >= 0 ? "text-success" : "text-danger")">@Model.NetBakiye.ToTrParaMoney()</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="table-wrapper mb-4">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Gün</th>
+                <th class="text-end">Gelir</th>
+                <th class="text-end">Gider</th>
+                <th class="text-end">Net</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in Model.GunlukOzetler)
+            {
+                var net = o.Gelir - o.Gider;
+                <tr>
+                    <td>@o.Tarih.ToTrDate()</td>
+                    <td class="text-success text-end">@o.Gelir.ToTrParaMoney()</td>
+                    <td class="text-danger text-end">@o.Gider.ToTrParaMoney()</td>
+                    <td class="@(net >= 0 ? "text-success" : "text-danger") text-end fw-bold">@net.ToTrParaMoney()</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr class="table-light fw-bold text-end">
+                <td class="text-start">Toplam</td>
+                <td class="text-success">@Model.AylikGelir.ToTrParaMoney()</td>
+                <td class="text-danger">@Model.AylikGider.ToTrParaMoney()</td>
+                <td class="@(Model.NetBakiye >= 0 ? "text-success" : "text-danger")">@Model.NetBakiye.ToTrParaMoney()</td>
+            </tr>
+        </tfoot>
+    </table>
+    </div>
+</div>

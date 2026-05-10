@@ -1,0 +1,147 @@
+@model CariErinc.ViewModels.CariIndexVM
+@{
+    ViewData["Title"] = "Cariler";
+}
+
+@Html.AntiForgeryToken()
+
+<!-- Page Header -->
+<div class="page-header mb-5">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <div class="p-3 bg-primary-container text-primary rounded-4 shadow-sm">
+                <span class="material-symbols-outlined fs-1">contacts</span>
+            </div>
+        </div>
+        <div class="col">
+            <h1 class="h3 fw-bold mb-1 text-primary-container">Cariler</h1>
+            <p class="text-muted mb-0">Müşteri ve tedarikçi cari hesaplarınız</p>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-6">
+                <label for="cariAramaInput" class="form-label small fw-bold">Cari Ara</label>
+                <input id="cariAramaInput" type="text" name="arama" value="@Model.Arama" class="form-control" placeholder="Ad, soyad veya telefon..." />
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">Filtrele</button>
+            </div>
+            <div class="col-md-3">
+                <a asp-action="Index" class="btn btn-outline-secondary w-100">Temizle</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-sm-6 col-md-4">
+        <div class="card border-0 shadow-premium rounded-4 h-100 bg-white">
+            <div class="card-body p-4">
+                <div class="text-muted extra-small text-uppercase fw-bold ls-wide">Toplam Alacak</div>
+                <div class="h3 text-success fw-bold mb-0">@Model.ToplamAlacak.ToTrParaMoney()</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-4">
+        <div class="card border-0 shadow-premium rounded-4 h-100 bg-white">
+            <div class="card-body p-4">
+                <div class="text-muted extra-small text-uppercase fw-bold ls-wide">Toplam Verecek</div>
+                <div class="h3 text-danger fw-bold mb-0">@Model.ToplamVerecek.ToTrParaMoney()</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-4">
+        <div class="card border-0 shadow-premium rounded-4 h-100 bg-white">
+            <div class="card-body p-4">
+                <div class="text-muted extra-small text-uppercase fw-bold ls-wide">Net</div>
+                <div class="h3 fw-bold mb-0 @(Model.NetBakiye >= 0 ? "text-primary" : "text-warning")">@Model.NetBakiye.ToTrParaMoney()</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-end mb-3">
+    <a asp-action="Form" class="btn btn-lg btn-primary">
+        <span class="material-symbols-outlined me-2" style="vertical-align: middle; font-size: 1.25rem;">add</span>
+        Yeni Cari Ekle
+    </a>
+</div>
+
+<div class="table-wrapper mb-4">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Cari</th>
+                <th>Rol</th>
+                <th>Telefon</th>
+                <th>Alacak</th>
+                <th>Verecek</th>
+                <th>Net</th>
+                <th style="width:200px;">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var satir in Model.Satirlar)
+            {
+                var net = satir.Alacak - satir.Verecek;
+                <tr>
+                    <td class="fw-bold"><a asp-action="Detail" asp-route-id="@satir.CariId" class="text-decoration-none">@satir.Ad</a></td>
+                    <td>@satir.RolEtiketi</td>
+                    <td>@(satir.Telefon ?? "-")</td>
+                    <td class="text-success fw-semibold">@satir.Alacak.ToTrParaMoney()</td>
+                    <td class="text-danger fw-semibold">@satir.Verecek.ToTrParaMoney()</td>
+                    <td class="@(net >= 0 ? "text-primary" : "text-warning") fw-bold">@net.ToTrParaMoney()</td>
+                    <td>
+                        <div class="d-flex gap-1 flex-wrap">
+                            <a asp-action="Ekstre" asp-route-id="@satir.CariId" class="btn-list-action btn-list-action-view" title="Hareket raporu">
+                                <span class="material-symbols-outlined">receipt_long</span>
+                            </a>
+                            <a asp-action="Detail" asp-route-id="@satir.CariId" class="btn-list-action btn-list-action-view" title="Detay">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </a>
+                            <a asp-action="Form" asp-route-id="@satir.CariId" class="btn-list-action btn-list-action-edit" title="Düzenle">
+                                <span class="material-symbols-outlined">edit</span>
+                            </a>
+                            <button type="button" class="btn-list-action btn-list-action-delete btn-delete"
+                                    data-url="@Url.Action("Sil", new { id = satir.CariId })"
+                                    data-title="Cariyi Sil"
+                                    data-text="'@satir.Ad' kaydı silinsin mi?">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <h5 class="fw-bold mb-3">Finans Özeti</h5>
+        <div class="row g-3">
+            <div class="col-md-6">Cari toplam alacak: <strong>@Model.Dogrulama.CariToplamAlacak.ToTrParaMoney()</strong></div>
+            <div class="col-md-6">Açık veresiye toplam: <strong>@Model.Dogrulama.AcikVeresiyeToplam.ToTrParaMoney()</strong></div>
+            <div class="col-md-6">Cari toplam verecek: <strong>@Model.Dogrulama.CariToplamVerecek.ToTrParaMoney()</strong></div>
+            <div class="col-md-6">Açık vadeli alış toplam: <strong>@Model.Dogrulama.AcikVadeliAlisToplam.ToTrParaMoney()</strong></div>
+            <div class="col-md-6">Kasa bakiye: <strong>@Model.Dogrulama.KasaBakiye.ToTrParaMoney()</strong></div>
+            <div class="col-md-6">
+                Tutarlılık:
+                @if (Model.Dogrulama.AlacakTutarlimi && Model.Dogrulama.VerecekTutarlimi)
+                {
+                    <span class="badge bg-success">Uygun</span>
+                }
+                else
+                {
+                    <span class="badge bg-warning text-dark">Kontrol Gerekli</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>

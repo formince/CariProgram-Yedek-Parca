@@ -1,0 +1,235 @@
+@model UrunVM
+@{
+    var isModal = Context.Request.Query["modal"] == "1"
+        || (Context.Request.HasFormContentType && Context.Request.Form["modal"] == "1");
+    Layout = isModal ? "_ModalLayout" : "_Layout";
+    bool isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "Yeni Ürün Tanımla" : "Ürün Düzenle";
+}
+
+<div class="form-container-premium" data-modal-page="1">
+    <!-- Page Header -->
+    @if (!isModal)
+    {
+        <div class="row align-items-center mb-4">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 fs-xs">
+                        <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">Ürün Listesi</a></li>
+                        <li class="breadcrumb-item active text-primary">@(isNew ? "Yeni Kayıt" : "Düzenleme")</li>
+                    </ol>
+                </nav>
+                <h2 class="h4 fw-bold mb-0 text-primary-container">
+                    <span class="material-symbols-outlined align-middle me-1">inventory_2</span> 
+                    @ViewData["Title"]
+                </h2>
+            </div>
+            <div class="col-auto">
+                <a asp-action="Index" class="btn btn-link text-muted text-decoration-none d-flex align-items-center gap-1 extra-small">
+                    <span class="material-symbols-outlined fs-5">close</span> Kapat
+                </a>
+            </div>
+        </div>
+    }
+
+    <form asp-action="Save" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        @if (isModal)
+        {
+            <input type="hidden" name="modal" value="1" />
+        }
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-4 p-3 bg-danger-container-low rounded-3 extra-small"></div>
+
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="form-card-premium shadow-sm">
+                    <div class="form-card-header">
+                        <span class="material-symbols-outlined text-primary fs-5">inventory_2</span>
+                        <h6>Ürün Bilgileri ve Tanımlama</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <!-- Temel Bilgiler -->
+                        <div class="row g-3 mb-5">
+                            <div class="col-12">
+                                <label asp-for="Ad" class="form-label-caps">Ürün Adı</label>
+                                <input asp-for="Ad" class="form-control-ghost" placeholder="Ürün adını giriniz..." autofocus />
+                                <span asp-validation-for="Ad" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Barkod" class="form-label-caps">Barkod / SKU</label>
+                                <input asp-for="Barkod" class="form-control-ghost" placeholder="Barkod no..." />
+                                <span asp-validation-for="Barkod" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Kategori" class="form-label-caps">Marka / Kategori</label>
+                                <input asp-for="Kategori" class="form-control-ghost" placeholder="Kategori..." />
+                                <span asp-validation-for="Kategori" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <!-- Fiyat ve Stok -->
+                        <div class="row g-4 pt-4 border-top">
+                            <div class="col-md-6">
+                                <div class="p-3 bg-surface-container-low rounded-4 border-start border-4 border-primary">
+                                    <label asp-for="BirimFiyat" class="form-label-caps text-primary">Satış Fiyatı (KDV Dahil)</label>
+                                    <div class="input-group">
+                                        <input para-tr-for="BirimFiyat" class="form-control border-0 bg-transparent fw-bold" placeholder="0.00" />
+                                        <span class="input-group-text bg-transparent border-0 fw-bold">₺</span>
+                                    </div>
+                                    <span asp-validation-for="BirimFiyat" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-surface-container-low rounded-4 border-start border-4 border-muted">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label asp-for="AlisFiyati" class="form-label-caps mb-0 text-muted">Alış Fiyatı (Mâliyet)</label>
+                                        @if (!isNew)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-link p-0 text-primary text-decoration-none extra-small fw-bold" id="fiyatGecmisiBtn" data-urun-id="@Model.Id">
+                                                <span class="material-symbols-outlined align-middle fs-6">history</span> GEÇMİŞ
+                                            </button>
+                                        }
+                                    </div>
+                                    <div class="input-group">
+                                        <input para-tr-for="AlisFiyati" class="form-control border-0 bg-transparent fw-bold" placeholder="0.00" />
+                                        <span class="input-group-text bg-transparent border-0 fw-bold">₺</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="StokAdedi" class="form-label-caps">Mevcut Stok</label>
+                                <input asp-for="StokAdedi" type="number" class="form-control-ghost" />
+                                <span asp-validation-for="StokAdedi" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="MinStokUyari" class="form-label-caps">Kritik Stok Seviyesi</label>
+                                <input asp-for="MinStokUyari" type="number" class="form-control-ghost" />
+                                <span asp-validation-for="MinStokUyari" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="KdvOrani" class="form-label-caps">KDV (%)</label>
+                                <select asp-for="KdvOrani" asp-items="ViewBag.KdvListesi" class="form-select form-select-ghost"></select>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="TedarikciId" class="form-label-caps">Varsayılan Tedarikçi</label>
+                                <select asp-for="TedarikciId" asp-items="ViewBag.TedarikciListesi" class="form-select form-select-ghost"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="form-actions-bar mt-2 shadow-sm rounded-4">
+                    <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined">save</span> 
+                        @(isNew ? "Ürünü Kaydet" : "Değişiklikleri Uygula")
+                    </button>
+                    @if (isModal)
+                    {
+                        <button type="button" class="btn btn-outline-secondary px-4" data-modal-close="1">Kapat</button>
+                    }
+                    else
+                    {
+                        <a asp-action="Index" class="btn btn-outline-secondary px-4 text-decoration-none">Vazgeç</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@if (!isNew && !isModal)
+{
+    <!-- Fiyat Geçmişi Modal -->
+    <div class="modal fade" id="fiyatGecmisiModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-surface-container-low py-3 px-4 border-0">
+                    <h5 class="modal-title fw-bold text-primary d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined">history</span>
+                        Fiyat Geçmişi
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 pt-0">
+                    <div id="fiyatGecmisiLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="fiyatGecmisiTable" style="display: none;">
+                            <thead>
+                                <tr class="extra-small text-uppercase text-muted fw-bold">
+                                    <th>Tarih</th>
+                                    <th>Eski</th>
+                                    <th>Yeni</th>
+                                    <th>Değişim</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fiyatGecmisiTableBody" class="small"></tbody>
+                        </table>
+                    </div>
+                    <div id="fiyatGecmisiEmpty" class="text-center py-5" style="display: none;">
+                        <p class="text-muted mb-0">Kayıtlı fiyat geçmişi bulunamadı.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScripts" />
+    @if (!isNew)
+    {
+        <script>
+            document.getElementById('fiyatGecmisiBtn')?.addEventListener('click', async function() {
+                const modal = new bootstrap.Modal(document.getElementById('fiyatGecmisiModal'));
+                const urunId = this.dataset.urunId;
+                const loading = document.getElementById('fiyatGecmisiLoading');
+                const table = document.getElementById('fiyatGecmisiTable');
+                const tbody = document.getElementById('fiyatGecmisiTableBody');
+                const empty = document.getElementById('fiyatGecmisiEmpty');
+
+                modal.show();
+                
+                try {
+                    const response = await fetch(`/api/urun/${urunId}/fiyat-gecmisi`);
+                    if (!response.ok) throw new Error('Veri çekilemedi');
+
+                    const gecmis = await response.json();
+                    loading.style.display = 'none';
+
+                    if (!gecmis || gecmis.length === 0) {
+                        empty.style.display = 'block';
+                        table.style.display = 'none';
+                        return;
+                    }
+
+                    tbody.innerHTML = gecmis.map(h => {
+                        const degisim = h.eskiFiyat > 0 ? ((h.yeniFiyat - h.eskiFiyat) / h.eskiFiyat * 100).toFixed(1) : 0;
+                        const degisimClass = degisim > 0 ? 'text-danger' : degisim < 0 ? 'text-success' : 'text-muted';
+                        
+                        return `
+                            <tr>
+                                <td class="text-muted">${new Date(h.tarih).toLocaleDateString('tr-TR')}</td>
+                                <td class="text-muted text-decoration-line-through">${h.eskiFiyat.toLocaleString('tr-TR')} ₺</td>
+                                <td class="fw-bold">${h.yeniFiyat.toLocaleString('tr-TR')} ₺</td>
+                                <td class="${degisimClass} fw-bold">% ${degisim}</td>
+                                <td class="extra-small font-monospace">${h.neden === 'OtomatikFatura' ? 'Fatura' : 'Manuel'}</td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                    table.style.display = 'table';
+                    empty.style.display = 'none';
+                } catch (error) {
+                    loading.innerHTML = '<p class="text-danger p-4">Hata oluştu.</p>';
+                }
+            });
+        </script>
+    }
+}

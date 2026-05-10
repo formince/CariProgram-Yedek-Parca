@@ -1,0 +1,106 @@
+@model VeresiyeVM
+@{
+    bool isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "Yeni Veresiye Kaydı" : "Veresiye Düzenle";
+}
+
+<div class="form-container-premium">
+    <!-- Page Header -->
+    <div class="row align-items-center mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 fs-xs">
+                    <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">Veresiye Listesi</a></li>
+                    <li class="breadcrumb-item active text-primary">@(isNew ? "Yeni Kayıt" : "Düzenleme")</li>
+                </ol>
+            </nav>
+            <h2 class="h4 fw-bold mb-0 text-primary-container">
+                <span class="material-symbols-outlined align-middle me-1">payments</span> 
+                @ViewData["Title"]
+            </h2>
+        </div>
+        <div class="col-auto">
+            <a asp-action="Index" class="btn btn-link text-muted text-decoration-none d-flex align-items-center gap-1 extra-small">
+                <span class="material-symbols-outlined fs-5">close</span> Kapat
+            </a>
+        </div>
+    </div>
+
+    <form asp-action="Save" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-4 p-3 bg-danger-container-low rounded-3 extra-small"></div>
+
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="form-card-premium shadow-sm">
+                    <div class="form-card-header">
+                        <span class="material-symbols-outlined text-primary fs-5">account_balance_wallet</span>
+                        <h6>Veresiye Hesap Detayları</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="MusteriId" class="form-label-caps">Müşteri Seçimi</label>
+                                @if (isNew)
+                                {
+                                    <select asp-for="MusteriId" asp-items="Model.MusteriListesi" class="form-select form-select-ghost"></select>
+                                }
+                                else
+                                {
+                                    <select asp-for="MusteriId" asp-items="Model.MusteriListesi" class="form-select form-select-ghost" disabled></select>
+                                    <input type="hidden" asp-for="MusteriId" />
+                                    <div class="extra-small text-muted mt-1">Müşteri kaydı değiştirilemez.</div>
+                                }
+                                <span asp-validation-for="MusteriId" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Tip" class="form-label-caps">İşlem Tipi</label>
+                                <select asp-for="Tip" class="form-select form-select-ghost">
+                                    <option value="1">💵 Elden Borç / Nakit</option>
+                                    <option value="0">🛒 Satış İşlemi</option>
+                                </select>
+                                <span asp-validation-for="Tip" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="p-3 bg-surface-container-low rounded-4 border-start border-4 border-primary">
+                                    <label asp-for="Tutar" class="form-label-caps text-primary">İşlem Tutarı</label>
+                                    <div class="input-group">
+                                        <input para-tr-for="Tutar" class="form-control border-0 bg-transparent fw-bold" placeholder="0.00" />
+                                        <span class="input-group-text bg-transparent border-0 fw-bold">₺</span>
+                                    </div>
+                                    <span asp-validation-for="Tutar" class="text-danger small"></span>
+                                </div>
+                                @if (!isNew)
+                                {
+                                    <div class="extra-small text-muted mt-2 px-2">Tutar güncellendiğinde müşteri bakiyesi otomatik düzeltilir.</div>
+                                }
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Aciklama" class="form-label-caps">İşlem Notu / Açıklama</label>
+                                <textarea asp-for="Aciklama" class="form-control-ghost" rows="3" placeholder="Gerekli açıklamayı giriniz..."></textarea>
+                                <span asp-validation-for="Aciklama" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="form-actions-bar mt-2 shadow-sm rounded-4">
+                    <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined">save</span> 
+                        @(isNew ? "Kayıdı Tamamla" : "Güncellemeyi Kaydet")
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4 text-decoration-none">Vazgeç</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScripts" />
+}

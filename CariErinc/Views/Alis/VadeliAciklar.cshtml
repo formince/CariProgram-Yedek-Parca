@@ -1,0 +1,75 @@
+@model List<Alis>
+@{
+    ViewData["Title"] = "Vadeli Açık Alışlar";
+}
+
+<div class="mb-4">
+    <h2>Vadeli Açık Alışlar (Toptancı Borçları)</h2>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Tedarikçi</label>
+                <select name="tedarikciId" class="form-select" asp-items="ViewBag.Tedarikciler"></select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Filtrele</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Tedarikçi</th>
+                <th>Tarih</th>
+                <th>Vade</th>
+                <th>Toplam Tutar</th>
+                <th>Ödenen</th>
+                <th>Kalan Borç</th>
+                <th style="width: 100px;">İşlem</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">Açık borç bulunamadı.</td>
+                </tr>
+            }
+            @foreach (var a in Model)
+            {
+                var vadeGecikme = a.VadeTarihi.HasValue && a.VadeTarihi.Value < DateTime.UtcNow.Date;
+                <tr>
+                    <td>@a.Tedarikci.Ad</td>
+                    <td>@a.Tarih.ToLocalTime().ToString("dd.MM.yyyy")</td>
+                    <td>
+                        <span class="@(vadeGecikme ? "text-danger fw-bold" : "")">
+                            @(a.VadeTarihi?.ToLocalTime().ToString("dd.MM.yyyy") ?? "-")
+                        </span>
+                    </td>
+                    <td>@a.ToplamTutar.ToString("N2") ₺</td>
+                    <td>@a.OdenenTutar.ToString("N2") ₺</td>
+                    <td class="text-danger fw-bold">@a.KalanBorc.ToString("N2") ₺</td>
+                    <td>
+                        <a asp-action="Odeme" asp-route-id="@a.Id" class="btn btn-sm btn-success">Ödeme Yap</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        @if (Model.Any())
+        {
+            <tfoot>
+                <tr class="table-light fw-bold">
+                    <td colspan="5" class="text-end">Genel Toplam Açık Borç:</td>
+                    <td class="text-danger">@Model.Sum(x => x.KalanBorc).ToString("N2") ₺</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        }
+    </table>
+</div>

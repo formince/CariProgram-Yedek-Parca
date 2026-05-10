@@ -1,0 +1,118 @@
+@model Satis
+@inject CariErinc.Services.Interfaces.IAyarService AyarSvc
+@{
+    Layout = null;
+    var dukkanAdi = await AyarSvc.GetAsync("DukkanAdi") ?? "Kırtasiye Dükkanı";
+    var musteriAdi = Model.Musteri != null ? $"{Model.Musteri.Ad} {Model.Musteri.Soyad}".Trim() : "Peşin Müşteri";
+    var kalanBorc = Model.Veresiye != null
+        ? Model.Veresiye.Tutar - (Model.Veresiye.Odemeler?.Sum(o => o.OdemeTutari) ?? 0)
+        : 0m;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fiş #@Model.Id</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; font-size: 12px; margin: 0; padding: 16px; background: #fff; }
+        .fis-container { max-width: 80mm; margin: 0 auto; }
+        .fis-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px; }
+        .fis-header h1 { margin: 0; font-size: 14px; }
+        .fis-row { display: flex; justify-content: space-between; margin: 2px 0; }
+        .fis-line { border-top: 1px dashed #000; margin: 8px 0; }
+        .fis-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .fis-table th, .fis-table td { padding: 2px 4px; text-align: left; }
+        .fis-table th { border-bottom: 1px solid #000; }
+        .fis-table .text-right { text-align: right; }
+        .fis-footer { text-align: center; margin-top: 12px; font-size: 11px; }
+        .print-btn { margin: 16px auto; display: block; padding: 10px 28px; font-size: 14px; cursor: pointer; background: #2563EB; color: #fff; border: none; border-radius: 6px; }
+        .print-btn:hover { background: #1D4ED8; }
+        @@media print {
+            body * { visibility: hidden; }
+            .fis-container, .fis-container * { visibility: visible; }
+            .fis-container { position: absolute; left: 0; top: 0; width: 100%; }
+            .print-btn { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="fis-container">
+        <div class="fis-header">
+            <h1>@dukkanAdi</h1>
+        </div>
+        <div class="fis-line"></div>
+        <div class="fis-row"><span>Tarih:</span><span>@Model.Tarih.ToString("dd.MM.yyyy HH:mm")</span></div>
+        <div class="fis-row"><span>Müşteri:</span><span>@musteriAdi</span></div>
+        <div class="fis-row"><span>Ödeme:</span><span>@(Model.OdemeTipi == OdemeTipi.Pesin ? "Peşin" : "Veresiye")</span></div>
+        @if (Model.OdemeTipi == OdemeTipi.Veresiye && Model.Veresiye != null)
+        {
+            <div class="fis-row"><span>Durum:</span><span>@(Model.Veresiye.OdenmeDurumu == OdenmeDurumu.Odendi ? "ÖDENDİ" : "BORÇLU")</span></div>
+            @if (kalanBorc > 0)
+            {
+                <div class="fis-row"><span>Kalan:</span><span>@(kalanBorc.ToString("N2")) ₺</span></div>
+            }
+        }
+        <div class="fis-line"></div>
+        <table class="fis-table">
+            <thead>
+                <tr>
+                    <th>Ürün</th>
+                    <th class="text-right">Adet</th>
+                    <th class="text-right">Fiyat</th>
+                    <th class="text-right">Net</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.SatisDetaylari)
+                {
+                    <tr>
+                        <td>
+                            @(d.Urun?.Ad)
+                            @if (d.IndirimOrani > 0)
+                            {
+                                <br /><small style="color:#666"> (İndirim: %@d.IndirimOrani.ToString("G29"))</small>
+                            }
+                        </td>
+                        <td class="text-right">@d.Miktar</td>
+                        <td class="text-right">@(d.BirimFiyat.ToString("N2"))</td>
+                        <td class="text-right">@(d.NetTutar.ToString("N2")) ₺</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="fis-line"></div>
+        @{
+            var fisKdvToplam = Model.SatisDetaylari.Sum(d => d.KdvTutari);
+            var fisAraToplam = Model.SatisDetaylari.Sum(d => d.NetTutar);
+            var fisIadeToplam = Model.SatisIadeler.SelectMany(x => x.IadeDetaylari).Sum(x => x.IadeTutari);
+        }
+        <div class="fis-row"><span>Ara Toplam:</span><span>@(fisAraToplam.ToString("N2")) ₺</span></div>
+        @if (Model.GenelIndirimTutari > 0)
+        {
+            <div class="fis-row"><span>Genel İndirim (%@Model.GenelIndirimOrani.ToString("G29")):</span><span>-@(Model.GenelIndirimTutari.ToString("N2")) ₺</span></div>
+        }
+        <div class="fis-row"><span>Satış Toplamı:</span><strong>@(Model.ToplamTutar.ToString("N2")) ₺</strong></div>
+        
+        @if (fisIadeToplam > 0)
+        {
+            <div class="fis-row" style="color: #d32f2f;"><span>Toplam İade:</span><span>-@(fisIadeToplam.ToString("N2")) ₺</span></div>
+            <div class="fis-line"></div>
+            <div class="fis-row" style="font-size: 14px;"><span></span><strong>NET TOPLAM: @((Model.ToplamTutar - fisIadeToplam).ToString("N2")) ₺</strong></div>
+        }
+        else
+        {
+            <div class="fis-row" style="margin-top: 4px; border-top: 1px double #000; padding-top: 2px;"><span></span><strong>TOPLAM: @(Model.ToplamTutar.ToString("N2")) ₺</strong></div>
+        }
+
+        @if (fisKdvToplam > 0)
+        {
+            <div class="fis-row" style="font-size: 10px; color: #444;"><span>KDV Toplamı:</span><span>@(fisKdvToplam.ToString("N2")) ₺</span></div>
+        }
+        <div class="fis-line"></div>
+        <div class="fis-footer">Teşekkür ederiz!</div>
+        <button type="button" class="print-btn" onclick="window.print()">🖨️ Yazdır</button>
+    </div>
+</body>
+</html>

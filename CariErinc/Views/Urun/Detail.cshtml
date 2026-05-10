@@ -1,0 +1,76 @@
+@model Urun
+@{
+    ViewData["Title"] = "Ürün Detay";
+    var hareketler = ViewBag.Hareketler as List<StokHareket> ?? new List<StokHareket>();
+}
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-link text-decoration-none mb-2">← Ürün listesine dön</a>
+    <h2>Ürün Detay</h2>
+</div>
+
+<div class="stat-card mb-4">
+    <div class="row">
+        <div class="col-md-6">
+            <p class="mb-1"><strong>Ad:</strong> @Model.Ad</p>
+            <p class="mb-1"><strong>Barkod:</strong> @(Model.Barkod ?? "-")</p>
+            <p class="mb-1"><strong>Marka:</strong> @Model.Kategori</p>
+            <p class="mb-1"><strong>Birim Fiyat:</strong> @Model.BirimFiyat.ToTrParaMoney()</p>
+        </div>
+        <div class="col-md-6">
+            <p class="mb-1"><strong>Stok Adedi:</strong> @Model.StokAdedi</p>
+            <p class="mb-1"><strong>Min Stok Uyarı:</strong> @Model.MinStokUyari</p>
+            <p class="mb-1"><strong>Tedarikçi:</strong> @(Model.Tedarikci?.Ad ?? "-")</p>
+            <div class="mt-2">
+                <a asp-action="Form" asp-route-id="@Model.Id" class="btn btn-warning btn-sm">Düzenle</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h5 class="mb-3">Son 20 Stok Hareketi</h5>
+@if (hareketler.Any())
+{
+    <div class="table-wrapper">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Tarih</th>
+                    <th>Hareket Tipi</th>
+                    <th>Miktar</th>
+                    <th>Açıklama</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var h in hareketler)
+                {
+                    <tr>
+                        <td>@h.Tarih.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>
+                            @switch (h.HareketTipi)
+                            {
+                                case HareketTipi.Giris:
+                                    <span class="badge bg-success">Giriş</span>
+                                    break;
+                                case HareketTipi.Cikis:
+                                    <span class="badge bg-danger">Çıkış</span>
+                                    break;
+                                case HareketTipi.Iade:
+                                    <span class="badge bg-info">İade</span>
+                                    break;
+                                case HareketTipi.Sayim:
+                                    <span class="badge bg-secondary">Sayım</span>
+                                    break;
+                            }
+                        </td>
+                        <td>@h.Miktar</td>
+                        <td>@(h.Aciklama ?? "-")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <p class="text-muted">Bu ürün için henüz stok hareketi yok.</p>
+}

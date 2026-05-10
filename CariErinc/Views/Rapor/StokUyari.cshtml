@@ -1,0 +1,48 @@
+@model StokUyariRaporVM
+@{
+    ViewData["Title"] = "Stok Uyarı Raporu";
+}
+
+<div class="mb-3 d-flex justify-content-end">
+    <a asp-action="StokUyariExcel" class="btn btn-success btn-sm">⬇️ Excel</a>
+</div>
+
+@if (!Model.KritikUrunler.Any())
+{
+    <div class="alert alert-success">
+        <strong>✅ Tüm stoklar yeterli</strong> — Kritik seviyede stok bulunmuyor.
+    </div>
+}
+else
+{
+    <div class="table-wrapper">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Ürün Adı</th>
+                    <th>Mevcut Stok</th>
+                    <th>Min Stok</th>
+                    <th>Fark</th>
+                    <th>Tedarikçi</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model.KritikUrunler)
+                {
+                    var fark = u.StokAdedi - u.MinStokUyari;
+                    <tr>
+                        <td>@u.Ad</td>
+                        <td class="text-danger fw-bold">@u.StokAdedi</td>
+                        <td>@u.MinStokUyari</td>
+                        <td class="text-danger fw-bold">@fark</td>
+                        <td>@(u.Tedarikci?.Ad ?? "-")</td>
+                        <td>
+                            <a asp-controller="Stok" asp-action="Form" asp-route-urunId="@u.Id" class="btn btn-sm btn-outline-primary">Stok Hareketi Gir</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

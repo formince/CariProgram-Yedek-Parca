@@ -1,0 +1,171 @@
+@using CariErinc.Helpers
+@model PagedResult<AuditLog>
+@{
+    ViewData["Title"] = "İşlem Geçmişi";
+}
+
+<!-- Page Header -->
+<div class="page-header mb-5">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <div class="p-3 bg-primary-container text-primary rounded-4 shadow-sm">
+                <span class="material-symbols-outlined fs-1">history</span>
+            </div>
+        </div>
+        <div class="col">
+            <h1 class="h3 fw-bold mb-1 text-primary-container">İşlem Geçmişi</h1>
+            <p class="text-muted mb-0">Sistem ve veri değişimleri takibi</p>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Card -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Tablo</label>
+                <select name="tablo" class="form-select">
+                    <option value="">Tümü</option>
+                    <option value="Satis" selected="@(ViewBag.Tablo == "Satis")">Satışlar</option>
+                    <option value="Alis" selected="@(ViewBag.Tablo == "Alis")">Alışlar</option>
+                    <option value="Musteri" selected="@(ViewBag.Tablo == "Musteri")">Müşteriler</option>
+                    <option value="Veresiye" selected="@(ViewBag.Tablo == "Veresiye")">Veresiyeler</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Başlangıç</label>
+                <input type="date" name="baslangic" class="form-control" value="@ViewBag.Baslangic" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Bitiş</label>
+                <input type="date" name="bitis" class="form-control" value="@ViewBag.Bitis" />
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <span class="material-symbols-outlined me-1" style="vertical-align: middle; font-size: 1rem;">search</span>
+                    Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Tarih</th>
+                <th>Kullanıcı</th>
+                <th>Tablo</th>
+                <th>Kayıt ID</th>
+                <th>İşlem</th>
+                <th>Açıklama</th>
+                <th style="width: 100px;">Detay</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Items.Any())
+            {
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">Kayıt bulunamadı.</td>
+                </tr>
+            }
+            @foreach (var log in Model.Items)
+            {
+                <tr>
+                    <td>@log.Tarih.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                    <td><span class="badge bg-light text-dark">@log.KullaniciAdi</span></td>
+                    <td>@log.Tablo</td>
+                    <td>@log.KayitId</td>
+                    <td>
+                        @{
+                            var badgeClass = log.Islem switch
+                            {
+                                "Eklendi" => "bg-success",
+                                "Guncellendi" => "bg-info",
+                                "Silindi" => "bg-danger",
+                                _ => "bg-secondary"
+                            };
+                        }
+                        <span class="badge @badgeClass">@log.Islem</span>
+                    </td>
+                    <td><small>@log.Aciklama</small></td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                onclick="showLogDetail(@log.Id, '@log.Islem')"
+                                data-eski="@log.EskiDeger"
+                                data-yeni="@log.YeniDeger">
+                            İncele
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<div class="mt-4">
+    @await Html.PartialAsync("_Pagination", new PaginationInfo { 
+        CurrentPage = Model.CurrentPage, 
+        TotalPages = Model.TotalPages, 
+        RouteValues = new Dictionary<string, string> { 
+            { "tablo", ViewBag.Tablo ?? "" },
+            { "baslangic", ViewBag.Baslangic ?? "" },
+            { "bitis", ViewBag.Bitis ?? "" }
+        } 
+    })
+</div>
+
+<!-- Detay Modalı -->
+<div class="modal fade" id="logDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">İşlem Detayı - <span id="logIslemTitle"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 border-end">
+                        <h6>Eski Değer</h6>
+                        <pre id="eskiDegerPre" class="bg-light p-2 small" style="max-height: 400px; overflow-y: auto;">-</pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Yeni Değer</h6>
+                        <pre id="yeniDegerPre" class="bg-light p-2 small" style="max-height: 400px; overflow-y: auto;">-</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showLogDetail(id, islem) {
+            const btn = event.currentTarget;
+            const eski = btn.getAttribute('data-eski');
+            const yeni = btn.getAttribute('data-yeni');
+
+            document.getElementById('logIslemTitle').innerText = islem;
+            
+            const formatJson = (json) => {
+                if (!json || json === "null") return "Kayıt yok / Alan boş";
+                try {
+                    const obj = JSON.parse(json);
+                    return JSON.stringify(obj, null, 2);
+                } catch (e) {
+                    return json;
+                }
+            };
+
+            document.getElementById('eskiDegerPre').innerText = formatJson(eski);
+            document.getElementById('yeniDegerPre').innerText = formatJson(yeni);
+
+            new bootstrap.Modal(document.getElementById('logDetailModal')).show();
+        }
+    </script>
+}

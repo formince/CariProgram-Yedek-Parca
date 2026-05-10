@@ -1,0 +1,82 @@
+@model List<CariErinc.Models.Rol>
+@{
+    ViewData["Title"] = "Roller";
+}
+
+<!-- Page Header -->
+<div class="page-header mb-5">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <div class="p-3 bg-primary-container text-primary rounded-4 shadow-sm">
+                <span class="material-symbols-outlined fs-1">shield</span>
+            </div>
+        </div>
+        <div class="col">
+            <h1 class="h3 fw-bold mb-1 text-primary-container">Roller</h1>
+            <p class="text-muted mb-0">Kullanıcı rolleri ve yetkileri yönetimi</p>
+        </div>
+        <div class="col-auto">
+            <a asp-action="Form" class="btn btn-lg btn-primary">
+                <span class="material-symbols-outlined me-2" style="vertical-align: middle; font-size: 1.25rem;">add</span>
+                Yeni Rol
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="table-wrapper">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Rol Adı</th>
+                <th>Açıklama</th>
+                <th class="text-center">Admin</th>
+                <th class="text-center">Kullanıcı Sayısı</th>
+                <th class="text-center">Yetki Sayısı</th>
+                <th class="text-end">İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var rol in Model)
+            {
+                <tr>
+                    <td class="fw-bold">@rol.Ad</td>
+                    <td class="text-muted small">@(rol.Aciklama ?? "-")</td>
+                    <td class="text-center">
+                        @if (rol.IsAdmin)
+                        {
+                            <span class="badge bg-danger-subtle text-danger border border-danger">Admin</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
+                    <td class="text-center fw-semibold">@rol.KullaniciRoller.Count</td>
+                    <td class="text-center fw-semibold">@rol.Yetkiler.Count</td>
+                    <td class="text-end text-nowrap">
+                        <div class="d-flex justify-content-end align-items-center gap-1">
+                            <a asp-action="Yetkiler" asp-route-id="@rol.Id" class="btn-list-action btn-list-action-view" title="Yetki Düzenle">
+                                <span class="material-symbols-outlined">key</span>
+                            </a>
+                            <a asp-action="Form" asp-route-id="@rol.Id" class="btn-list-action btn-list-action-edit" title="Düzenle">
+                                <span class="material-symbols-outlined">edit</span>
+                            </a>
+                            @if (!rol.IsAdmin)
+                            {
+                                <button type="button" class="btn-list-action btn-list-action-delete btn-delete" 
+                                        data-url="@Url.Action("Sil", new { id = rol.Id })"
+                                        data-title="Rolü Sil"
+                                        data-text="@rol.Ad rolünü silmek istediğinize emin misiniz?">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    </div>
+</div>

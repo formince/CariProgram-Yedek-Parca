@@ -1,0 +1,13 @@
+@{
+    ViewData["Title"] = "Erişim Reddedildi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex flex-column align-items-center justify-content-center" style="min-height:50vh;">
+    <div class="text-center">
+        <div style="font-size:4rem;">🔒</div>
+        <h2 class="mt-3">Erişim Reddedildi</h2>
+        <p class="text-muted">Bu sayfaya erişim yetkiniz bulunmuyor.<br/>Yetki için yöneticinizle iletişime geçin.</p>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn btn-primary mt-2">Ana Sayfaya Dön</a>
+    </div>
+</div>

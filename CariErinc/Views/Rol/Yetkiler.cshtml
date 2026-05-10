@@ -1,0 +1,189 @@
+@model CariErinc.ViewModels.RolYetkiDuzenleVM
+@{
+    ViewData["Title"] = $"Yetkiler: {Model.RolAdi}";
+    var yetkiToggleUrl = Url.Action("YetkiToggle", "Rol") ?? "/Rol/YetkiToggle";
+    var sidebarAyarUrl = Url.Action("SidebarAyarGuncelle", "Rol") ?? "/Rol/SidebarAyarGuncelle";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1">🔑 Yetkiler: <span class="text-primary">@Model.RolAdi</span></h4>
+        @if (Model.IsAdmin)
+        {
+            <span class="badge bg-danger-subtle text-danger border border-danger">Admin — Tam Erişime Sahip</span>
+        }
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">← Rollere Dön</a>
+</div>
+
+@if (Model.IsAdmin)
+{
+    <div class="alert alert-info">Bu rol Admin olarak işaretlenmiş. Tüm sayfalara otomatik erişimi var; ayrıca yetki atamanıza gerek yok.</div>
+}
+
+<div class="mb-3 d-flex gap-2">
+    <input type="text" id="kontrolFiltreInput" class="form-control form-control-sm" style="max-width:280px;" placeholder="Controller/Action ara..." />
+    <button type="button" class="btn btn-sm btn-outline-success" id="tumunuSec">Tümünü Seç</button>
+    <button type="button" class="btn btn-sm btn-outline-danger" id="tumunuKaldir">Tümünü Kaldır</button>
+</div>
+
+<div id="yetkiContainer">
+@foreach (var grup in Model.ControllerGruplari)
+{
+    <div class="card mb-3 controller-grup" data-controller="@grup.Controller">
+        <div class="card-header d-flex justify-content-between align-items-center py-2">
+            <strong>@grup.Controller</strong>
+            <button type="button" class="btn btn-sm btn-outline-secondary grup-tumunu" data-controller="@grup.Controller">
+                Grubun tümü
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:40px;"></th>
+                        <th style="width:140px;">Action</th>
+                        <th>Sidebar Başlık</th>
+                        <th style="width:130px;">Grup</th>
+                        <th style="width:70px;">Sıra</th>
+                        <th style="width:60px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var action in grup.Actions)
+                {
+                    var key = grup.Controller + "/" + action;
+                    var atanmis = Model.AtanmisYetkiler.Contains(key);
+                    var sidebar = Model.SidebarAyarlari.TryGetValue(key, out var s) ? s : new CariErinc.ViewModels.RolYetkiSatirVM();
+                    <tr class="yetki-satir" data-key="@key" data-controller="@grup.Controller" data-action="@action">
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input yetki-chk"
+                                   data-controller="@grup.Controller" data-action="@action"
+                                   @(atanmis ? "checked" : "") />
+                        </td>
+                        <td class="small fw-semibold">@action</td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm sidebar-goruntu"
+                                   value="@sidebar.SidebarGoruntuAdi"
+                                   placeholder="Menüde gösterilmeyecek"
+                                   @(!atanmis ? "disabled" : "") />
+                        </td>
+                        <td>
+                            <input type="text" class="form-control form-control-sm sidebar-grup"
+                                   value="@sidebar.SidebarGrubu"
+                                   placeholder="SATIŞ vb."
+                                   @(!atanmis ? "disabled" : "") />
+                        </td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm sidebar-sira"
+                                   value="@sidebar.SidebarSira" min="0"
+                                   @(!atanmis ? "disabled" : "") />
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary sidebar-kaydet"
+                                    data-controller="@grup.Controller" data-action="@action"
+                                    @(!atanmis ? "disabled" : "")
+                                    title="Sidebar ayarlarını kaydet">💾</button>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+</div>
+
+@section Scripts {
+<script>
+(function() {
+    var rolId = @Model.RolId;
+    var yetkiUrl = '@yetkiToggleUrl';
+    var sidebarUrl = '@sidebarAyarUrl';
+
+    function showToast(msg, type) {
+        if (typeof siteJs !== 'undefined' && siteJs.showToast) siteJs.showToast(msg, type || 'info');
+    }
+
+    async function toggleYetki(controller, action, ekle, row) {
+        var res = await fetch(yetkiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rolId, controller, action, ekle })
+        });
+        if (!res.ok) { showToast('Hata oluştu', 'danger'); return; }
+        row.querySelectorAll('input:not(.yetki-chk), button.sidebar-kaydet').forEach(function(el) {
+            el.disabled = !ekle;
+        });
+    }
+
+    document.querySelectorAll('.yetki-chk').forEach(function(chk) {
+        chk.addEventListener('change', function() {
+            var row = this.closest('tr');
+            toggleYetki(this.dataset.controller, this.dataset.action, this.checked, row);
+        });
+    });
+
+    document.querySelectorAll('.sidebar-kaydet').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+            var row = this.closest('tr');
+            var controller = this.dataset.controller;
+            var action = this.dataset.action;
+            var goruntu = row.querySelector('.sidebar-goruntu').value;
+            var grup = row.querySelector('.sidebar-grup').value;
+            var sira = parseInt(row.querySelector('.sidebar-sira').value) || 0;
+            var res = await fetch(sidebarUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rolId, controller, action, sidebarGrubu: grup, sidebarGoruntuAdi: goruntu, sidebarSira: sira })
+            });
+            if (res.ok) showToast('Sidebar ayarları kaydedildi', 'success');
+            else showToast('Hata oluştu', 'danger');
+        });
+    });
+
+    // Tümünü seç/kaldır
+    document.getElementById('tumunuSec').addEventListener('click', function() {
+        document.querySelectorAll('.yetki-chk:not(:checked)').forEach(function(chk) {
+            chk.checked = true;
+            var row = chk.closest('tr');
+            toggleYetki(chk.dataset.controller, chk.dataset.action, true, row);
+        });
+    });
+    document.getElementById('tumunuKaldir').addEventListener('click', function() {
+        document.querySelectorAll('.yetki-chk:checked').forEach(function(chk) {
+            chk.checked = false;
+            var row = chk.closest('tr');
+            toggleYetki(chk.dataset.controller, chk.dataset.action, false, row);
+        });
+    });
+
+    // Grup tümü toggle
+    document.querySelectorAll('.grup-tumunu').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var ctrl = this.dataset.controller;
+            var checkboxes = document.querySelectorAll('.yetki-chk[data-controller="' + ctrl + '"]');
+            var hepsiSecili = Array.from(checkboxes).every(function(c) { return c.checked; });
+            checkboxes.forEach(function(chk) {
+                chk.checked = !hepsiSecili;
+                var row = chk.closest('tr');
+                toggleYetki(chk.dataset.controller, chk.dataset.action, !hepsiSecili, row);
+            });
+        });
+    });
+
+    // Filtreleme
+    document.getElementById('kontrolFiltreInput').addEventListener('input', function() {
+        var q = this.value.trim().toLowerCase();
+        document.querySelectorAll('.yetki-satir').forEach(function(row) {
+            var key = (row.dataset.controller + '/' + row.dataset.action).toLowerCase();
+            row.style.display = q === '' || key.includes(q) ? '' : 'none';
+        });
+        document.querySelectorAll('.controller-grup').forEach(function(grup) {
+            var visibleRows = grup.querySelectorAll('.yetki-satir:not([style*="display: none"])');
+            grup.style.display = visibleRows.length === 0 ? 'none' : '';
+        });
+    });
+})();
+</script>
+}

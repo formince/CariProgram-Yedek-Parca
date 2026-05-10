@@ -1,0 +1,155 @@
+@model VeresiyeIndexVM
+@{
+    ViewData["Title"] = "Veresiye";
+    var musteriListesi = ViewBag.MusteriListesi as SelectList;
+}
+
+@Html.AntiForgeryToken()
+
+<!-- Page Header -->
+<div class="page-header mb-5">
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <div class="p-3 bg-primary-container text-primary rounded-4 shadow-sm">
+                <span class="material-symbols-outlined fs-1">receipt</span>
+            </div>
+        </div>
+        <div class="col">
+            <h1 class="h3 fw-bold mb-1 text-primary-container">Veresiye Yönetimi</h1>
+            <p class="text-muted mb-0">Müşteri kredileri ve ödeme takibi</p>
+        </div>
+        <div class="col-auto">
+            <a asp-action="Form" class="btn btn-lg btn-primary">
+                <span class="material-symbols-outlined me-2" style="vertical-align: middle; font-size: 1.25rem;">add</span>
+                Yeni Veresiye
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Card -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Müşteri</label>
+                <select name="musteriId" class="form-select" asp-items="musteriListesi"></select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold">Durum</label>
+                <select name="durum" class="form-select">
+                    <option value="" selected="@(Model.Durum == null)">Hepsi</option>
+                    <option value="Bekliyor" selected="@(Model.Durum == OdenmeDurumu.Bekliyor)">Bekliyor</option>
+                    <option value="KismiOdendi" selected="@(Model.Durum == OdenmeDurumu.KismiOdendi)">Kısmi Ödendi</option>
+                    <option value="Odendi" selected="@(Model.Durum == OdenmeDurumu.Odendi)">Ödendi</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold">Başlangıç</label>
+                <input type="date" name="baslangic" value="@Model.Baslangic" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold">Bitiş</label>
+                <input type="date" name="bitis" value="@Model.Bitis" class="form-control" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <span class="material-symbols-outlined me-1" style="vertical-align: middle; font-size: 1rem;">search</span>
+                    Filtrele
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Veresiyeler.Any())
+{
+    <div class="table-wrapper mb-4">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Müşteri</th>
+                    <th>Tutar</th>
+                    <th>Kalan Borç</th>
+                    <th>Tarih</th>
+                    <th>Durum</th>
+                    <th style="width: 120px;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var v in Model.Veresiyeler)
+                {
+                    var kalanBorc = v.Tutar - (v.Odemeler?.Sum(o => o.OdemeTutari) ?? 0);
+                    <tr>
+                        <td class="fw-bold">@(v.Musteri?.Ad) @(v.Musteri?.Soyad)</td>
+                        <td>@v.Tutar.ToString("N2") ₺</td>
+                        <td class="text-danger fw-bold">@kalanBorc.ToString("N2") ₺</td>
+                        <td class="text-muted">@v.Tarih.ToString("dd.MM.yyyy")</td>
+                        <td>
+                            @switch (v.OdenmeDurumu)
+                            {
+                                case OdenmeDurumu.Bekliyor:
+                                    <span class="badge bg-warning text-dark border border-warning-subtle">Bekliyor</span>
+                                    break;
+                                case OdenmeDurumu.KismiOdendi:
+                                    <span class="badge bg-warning-subtle text-warning border border-warning" style="background-color:#fff3cd">Kısmi Ödendi</span>
+                                    break;
+                                case OdenmeDurumu.Odendi:
+                                    <span class="badge bg-success-subtle text-success border border-success">Ödendi</span>
+                                    break;
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end align-items-center gap-1">
+                                <a asp-action="Detail" asp-route-id="@v.Id" class="btn-list-action btn-list-action-view" title="Detay">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                </a>
+                                <a asp-action="Form" asp-route-id="@v.Id" class="btn-list-action btn-list-action-edit" title="Düzenle">
+                                    <span class="material-symbols-outlined">edit</span>
+                                </a>
+                                @if (kalanBorc > 0)
+                                {
+                                    <a asp-action="Odeme" asp-route-id="@v.Id" class="btn-list-action btn-list-action-primary" title="Ödeme Al">
+                                        <span class="material-symbols-outlined">monetization_on</span>
+                                    </a>
+                                }
+                                <button type="button" class="btn-list-action btn-list-action-delete btn-delete" 
+                                        data-url="@Url.Action("Sil", new { id = v.Id })"
+                                        data-title="Veresiye Sil"
+                                        data-text="Bu veresiye kaydını silmek istediğinize emin misiniz?">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Sayfalama">
+            <ul class="pagination pagination-sm justify-content-center">
+                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage - 1)" asp-route-musteriId="@Model.MusteriId" asp-route-durum="@Model.Durum" asp-route-baslangic="@Model.Baslangic" asp-route-bitis="@Model.Bitis">Önceki</a>
+                </li>
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-musteriId="@Model.MusteriId" asp-route-durum="@Model.Durum" asp-route-baslangic="@Model.Baslangic" asp-route-bitis="@Model.Bitis">@i</a>
+                    </li>
+                }
+                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.CurrentPage + 1)" asp-route-musteriId="@Model.MusteriId" asp-route-durum="@Model.Durum" asp-route-baslangic="@Model.Baslangic" asp-route-bitis="@Model.Bitis">Sonraki</a>
+                </li>
+            </ul>
+        </nav>
+    }
+}
+else
+{
+    <div class="alert alert-info border-0 shadow-sm">Veresiye kaydı bulunamadı veya arama kriterine uygun sonuç yok.</div>
+}

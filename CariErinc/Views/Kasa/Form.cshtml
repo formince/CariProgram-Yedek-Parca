@@ -1,0 +1,98 @@
+@model KasaVM
+@using CariErinc.Models
+@{
+    bool isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? "Yeni Kasa İşlemi" : "Kasa İşlemi Düzenle";
+}
+
+<div class="form-container-premium">
+    <!-- Page Header -->
+    <div class="row align-items-center mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 fs-xs">
+                    <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">Kasa Defteri</a></li>
+                    <li class="breadcrumb-item active text-primary">@(isNew ? "Yeni Kayıt" : "Düzenleme")</li>
+                </ol>
+            </nav>
+            <h2 class="h4 fw-bold mb-0 text-primary-container">
+                <span class="material-symbols-outlined align-middle me-1">account_balance</span> 
+                @ViewData["Title"]
+            </h2>
+        </div>
+        <div class="col-auto">
+            <a asp-action="Index" class="btn btn-link text-muted text-decoration-none d-flex align-items-center gap-1 extra-small">
+                <span class="material-symbols-outlined fs-5">close</span> Kapat
+            </a>
+        </div>
+    </div>
+
+    <form asp-action="Save" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-4 p-3 bg-danger-container-low rounded-3 extra-small"></div>
+
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="form-card-premium shadow-sm">
+                    <div class="form-card-header">
+                        <span class="material-symbols-outlined text-primary fs-5">point_of_sale</span>
+                        <h6>Gelir / Gider İşlem Detayları</h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="HareketTipi" class="form-label-caps">İşlem Türü</label>
+                                <select asp-for="HareketTipi" class="form-select form-select-ghost shadow-none">
+                                    <option value="@KasaHareketTipi.Gider">🔴 Nakit Çıkışı (Gider)</option>
+                                    <option value="@KasaHareketTipi.Gelir">🟢 Nakit Girişi (Gelir)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Tarih" class="form-label-caps">İşlem Tarihi</label>
+                                <input asp-for="Tarih" type="date" class="form-control-ghost" />
+                                <span asp-validation-for="Tarih" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="GiderKategoriId" class="form-label-caps">Kategori / Açıklama Türü</label>
+                                <select asp-for="GiderKategoriId" asp-items="ViewBag.KategoriListesi" class="form-select form-select-ghost"></select>
+                                <span asp-validation-for="GiderKategoriId" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="p-3 bg-surface-container-low rounded-4 border-start border-4 border-primary">
+                                    <label asp-for="Tutar" class="form-label-caps text-primary">İşlem Tutarı</label>
+                                    <div class="input-group">
+                                        <input para-tr-for="Tutar" class="form-control border-0 bg-transparent fw-bold" placeholder="0.00" />
+                                        <span class="input-group-text bg-transparent border-0 fw-bold">₺</span>
+                                    </div>
+                                    <span asp-validation-for="Tutar" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Aciklama" class="form-label-caps">Detaylı Açıklama</label>
+                                <textarea asp-for="Aciklama" class="form-control-ghost" rows="3" placeholder="İşlem ile ilgili notlar..."></textarea>
+                                <span asp-validation-for="Aciklama" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="form-actions-bar mt-2 shadow-sm rounded-4">
+                    <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm d-flex align-items-center gap-2">
+                        <span class="material-symbols-outlined">save</span> 
+                        @(isNew ? "İşlemi Kaydet" : "Güncellemeleri Uygula")
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4 text-decoration-none">Vazgeç</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScripts" />
+}
