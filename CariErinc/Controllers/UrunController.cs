@@ -24,12 +24,22 @@ public class UrunController : BaseController
     }
 
 
-    public async Task<IActionResult> Index(string? arama, string? kategori, int? tedarikciId, string? stokDurumu, int page = 1)
+    public async Task<IActionResult> Index(
+        string? arama,
+        string? kategori,
+        int? tedarikciId,
+        string? stokDurumu,
+        string? aracMarkasi,
+        string? aracModeli,
+        ParcaTipi? parcaTipi,
+        string? parcaKoduArama,
+        int page = 1)
     {
         ViewData["Title"] = "Ürünler";
-        var vm = await _urunService.GetPagedListAsync(page, arama, kategori, tedarikciId, stokDurumu);
+        var vm = await _urunService.GetPagedListAsync(
+            page, arama, kategori, tedarikciId, stokDurumu,
+            aracMarkasi, aracModeli, parcaTipi, parcaKoduArama);
 
-        // Filtreler için listeler
         ViewBag.Kategoriler = await _lookupService.GetUrunKategorileriAsync(kategori);
         ViewBag.TedarikciListesi = await _lookupService.GetTedarikcilerAsync(tedarikciId);
 
@@ -56,7 +66,22 @@ public class UrunController : BaseController
                 AlisFiyati = urun.AlisFiyati,
                 StokAdedi = urun.StokAdedi,
                 MinStokUyari = urun.MinStokUyari,
-                TedarikciId = urun.TedarikciId
+                TedarikciId = urun.TedarikciId,
+                AracMarkasi = urun.AracMarkasi,
+                AracModeli = urun.AracModeli,
+                ModelYiliBaslangic = urun.ModelYiliBaslangic,
+                ModelYiliBitis = urun.ModelYiliBitis,
+                MotorTipi = urun.MotorTipi,
+                ParcaTipi = urun.ParcaTipi,
+                ParcaKodlari = urun.ParcaKodlari.OrderBy(pk => pk.KodTipi).ThenBy(pk => pk.Kod)
+                    .Select(pk => new ParcaKoduVM
+                    {
+                        Id = pk.Id,
+                        UrunId = pk.UrunId,
+                        KodTipi = pk.KodTipi,
+                        Kod = pk.Kod,
+                        Aciklama = pk.Aciklama
+                    }).ToList()
             };
             
             ViewBag.TedarikciListesi = await _lookupService.GetTedarikcilerAsync(vm.TedarikciId);
@@ -137,6 +162,45 @@ public class UrunController : BaseController
     public async Task<IActionResult> Sil(int id)
     {
         var result = await _urunService.SilAsync(id);
+        return Json(new { success = result.IsSuccess, message = result.Message });
+    }
+
+    [HttpGet("ParcaKodlari/{urunId:int}")]
+    public async Task<IActionResult> ParcaKodlari(int urunId)
+    {
+        var list = await _urunService.GetParcaKodlariAsync(urunId);
+        return Json(list.Select(pk => new
+        {
+            pk.Id,
+            pk.UrunId,
+            kodTipi = (int)pk.KodTipi,
+            kodTipiAd = pk.KodTipi.ToString(),
+            pk.Kod,
+            pk.Aciklama
+        }));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ParcaKoduEkle(int urunId, ParcaKoduVM vm)
+    {
+        var result = await _urunService.ParcaKoduEkleAsync(urunId, vm);
+        return Json(new { success = result.IsSuccess, message = result.Message });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ParcaKoduGuncelle(int kodId, ParcaKoduVM vm)
+    {
+        var result = await _urunService.ParcaKoduGuncelleAsync(kodId, vm);
+        return Json(new { success = result.IsSuccess, message = result.Message });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ParcaKoduSil(int kodId)
+    {
+        var result = await _urunService.ParcaKoduSilAsync(kodId);
         return Json(new { success = result.IsSuccess, message = result.Message });
     }
 

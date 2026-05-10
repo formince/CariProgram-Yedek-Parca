@@ -22,6 +22,11 @@ public class UrunIndexVM
     public int? TedarikciId { get; set; }
     public string? StokDurumu { get; set; }
 
+    public string? AracMarkasi { get; set; }
+    public string? AracModeli { get; set; }
+    public ParcaTipi? ParcaTipi { get; set; }
+    public string? ParcaKoduArama { get; set; }
+
     // Sayfalama
     public int CurrentPage { get; set; } = 1;
     public int TotalPages { get; set; }

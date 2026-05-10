@@ -1,7 +1,5 @@
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
-@inject CariErinc.Services.Interfaces.IAyarService AyarSvc
 @{
-    var dukkanAdi = await AyarSvc.GetAsync("DukkanAdi") ?? "Kırtasiye Dükkanı";
     var title = ViewData["Title"] as string ?? "Panel";
     var userName = HttpContextAccessor.HttpContext?.User?.Identity?.Name ?? "Kullanıcı";
 }
@@ -12,8 +10,6 @@
         </svg>
     </button>
     <div class="navbar-title-container">
-        <span class="navbar-shop-name d-none d-sm-inline">@dukkanAdi</span>
-        <span class="navbar-shop-separator d-none d-sm-inline">|</span>
         <h1 class="navbar-title">@title</h1>
     </div>
     <div class="navbar-actions">

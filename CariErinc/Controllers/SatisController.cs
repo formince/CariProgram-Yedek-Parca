@@ -266,6 +266,7 @@ public class SatisController : BaseController
             return Json(null);
 
         var urun = await _urunService.GetByBarkodAsync(barkod);
+        urun ??= await _urunService.GetByParcaKoduAsync(barkod);
         if (urun == null)
             return Json(null);
 

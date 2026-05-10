@@ -34,6 +34,7 @@ public class AppDbContext : DbContext
     public DbSet<SatisIadeDetay> SatisIadeDetaylari { get; set; }
     public DbSet<UrunFiyatAudit> UrunFiyatAuditlari { get; set; }
     public DbSet<FaturaEslesme> FaturaEslesmeleri { get; set; }
+    public DbSet<ParcaKodu> ParcaKodlari { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -165,6 +166,26 @@ public class AppDbContext : DbContext
             .HasForeignKey(u => u.CariId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        modelBuilder.Entity<ParcaKodu>()
+            .HasOne(pk => pk.Urun)
+            .WithMany(u => u.ParcaKodlari)
+            .HasForeignKey(pk => pk.UrunId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ParcaKodu>()
+            .HasIndex(pk => pk.Kod);
+
+        modelBuilder.Entity<ParcaKodu>()
+            .HasIndex(pk => new { pk.KodTipi, pk.Kod });
+
+        modelBuilder.Entity<Urun>()
+            .Property(u => u.ParcaTipi)
+            .HasConversion<int>();
+
+        modelBuilder.Entity<ParcaKodu>()
+            .Property(pk => pk.KodTipi)
+            .HasConversion<int>();
+
         modelBuilder.Entity<KasaHareket>()
             .HasOne(kh => kh.GiderKategori)
             .WithMany()
@@ -205,8 +226,8 @@ public class AppDbContext : DbContext
 
         // Seed: İşletme ayarları
         modelBuilder.Entity<IsletmeAyar>().HasData(
-            new IsletmeAyar { Id = 1, Anahtar = "DukkanAdi", Deger = "Kırtasiye Dükkanı" },
-            new IsletmeAyar { Id = 2, Anahtar = "IsletmeTipi", Deger = "Kirtasiye" },
+            new IsletmeAyar { Id = 1, Anahtar = "DukkanAdi", Deger = "Yedek Parça Dükkanı" },
+            new IsletmeAyar { Id = 2, Anahtar = "IsletmeTipi", Deger = "YedekParca" },
             new IsletmeAyar { Id = 3, Anahtar = "Adres", Deger = "" },
             new IsletmeAyar { Id = 4, Anahtar = "Telefon", Deger = "" },
             new IsletmeAyar { Id = 5, Anahtar = "VarsayilanKdv", Deger = "20" }

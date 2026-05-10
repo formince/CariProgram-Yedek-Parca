@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CariErinc.Models;
 
 namespace CariErinc.ViewModels;
 
@@ -40,4 +41,27 @@ public class UrunVM
 
     [Display(Name = "Tedarikçi")]
     public int? TedarikciId { get; set; }
+
+    [MaxLength(100)]
+    [Display(Name = "Araç markası")]
+    public string? AracMarkasi { get; set; }
+
+    [MaxLength(100)]
+    [Display(Name = "Araç modeli")]
+    public string? AracModeli { get; set; }
+
+    [Display(Name = "Model yılı başlangıç")]
+    public int? ModelYiliBaslangic { get; set; }
+
+    [Display(Name = "Model yılı bitiş")]
+    public int? ModelYiliBitis { get; set; }
+
+    [MaxLength(50)]
+    [Display(Name = "Motor tipi")]
+    public string? MotorTipi { get; set; }
+
+    [Display(Name = "Parça tipi")]
+    public ParcaTipi? ParcaTipi { get; set; }
+
+    public List<ParcaKoduVM> ParcaKodlari { get; set; } = new();
 }

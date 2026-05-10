@@ -10,19 +10,28 @@ public class YetkiCacheService : IYetkiCacheService
 {
     private readonly IMemoryCache _cache;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(15);
     private const string AllKeyPrefix = "yetki_rol_";
 
-    public YetkiCacheService(IMemoryCache cache, IServiceScopeFactory scopeFactory)
+    public YetkiCacheService(IMemoryCache cache, IServiceScopeFactory scopeFactory, IHttpContextAccessor httpContextAccessor)
     {
         _cache = cache;
         _scopeFactory = scopeFactory;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    private string TenantCachePrefix()
+    {
+        if (_httpContextAccessor.HttpContext?.Items["TenantInfo"] is TenantInfo t && !string.IsNullOrEmpty(t.Subdomain))
+            return $"{t.Subdomain}_";
+        return "default_";
     }
 
     public async Task<HashSet<(string Controller, string Action)>> GetYetkilerAsync(IEnumerable<int> rolIds)
     {
         var ids = rolIds.ToArray();
-        var cacheKey = AllKeyPrefix + string.Join("_", ids.OrderBy(x => x));
+        var cacheKey = TenantCachePrefix() + AllKeyPrefix + string.Join("_", ids.OrderBy(x => x));
 
         if (_cache.TryGetValue(cacheKey, out HashSet<(string, string)>? cached) && cached is not null)
             return cached;
@@ -44,7 +53,7 @@ public class YetkiCacheService : IYetkiCacheService
     public async Task<List<RolYetki>> GetSidebarLinksAsync(IEnumerable<int> rolIds)
     {
         var ids = rolIds.ToArray();
-        var cacheKey = AllKeyPrefix + "sidebar_" + string.Join("_", ids.OrderBy(x => x));
+        var cacheKey = TenantCachePrefix() + AllKeyPrefix + "sidebar_" + string.Join("_", ids.OrderBy(x => x));
 
         if (_cache.TryGetValue(cacheKey, out List<RolYetki>? cached) && cached is not null)
             return cached;

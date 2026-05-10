@@ -32,6 +32,10 @@
                     <input type="text" name="arama" value="@Model.Arama" class="form-control border-0 bg-surface-container rounded-end-3" placeholder="Ad veya barkod..." />
                 </div>
             </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-uppercase tracking-wider text-muted">Parça kodu</label>
+                <input type="text" name="parcaKoduArama" value="@Model.ParcaKoduArama" class="form-control form-control-sm border-0 bg-surface-container rounded-3" placeholder="OEM, muadil, barkod..." />
+            </div>
             <div class="col-md-2">
                 <label class="form-label small fw-bold text-uppercase tracking-wider text-muted">Marka</label>
                 <select name="kategori" asp-items="ViewBag.Kategoriler" class="form-select form-select-sm border-0 bg-surface-container rounded-3">
@@ -53,7 +57,24 @@
                     <option value="Yok" selected="@(Model.StokDurumu == "Yok")">Stokta Yok</option>
                 </select>
             </div>
-            <div class="col-md-3 d-flex gap-2">
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase tracking-wider text-muted">Araç markası</label>
+                <input type="text" name="aracMarkasi" value="@Model.AracMarkasi" class="form-control form-control-sm border-0 bg-surface-container rounded-3" placeholder="Örn. Ford" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase tracking-wider text-muted">Araç modeli</label>
+                <input type="text" name="aracModeli" value="@Model.AracModeli" class="form-control form-control-sm border-0 bg-surface-container rounded-3" placeholder="Örn. Focus" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-uppercase tracking-wider text-muted">Parça tipi</label>
+                <select name="parcaTipi" class="form-select form-select-sm border-0 bg-surface-container rounded-3">
+                    <option value="">Tümü</option>
+                    <option value="0" selected="@(Model.ParcaTipi == ParcaTipi.Orjinal)">Orijinal</option>
+                    <option value="1" selected="@(Model.ParcaTipi == ParcaTipi.YanSanayi)">Yan sanayi</option>
+                    <option value="2" selected="@(Model.ParcaTipi == ParcaTipi.Revizyon)">Revizyon</option>
+                </select>
+            </div>
+            <div class="col-md-6 d-flex gap-2 align-items-end">
                 <button type="submit" class="btn btn-primary btn-sm flex-grow-1 rounded-3">Filtrele</button>
                 <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-3">Temizle</a>
             </div>
@@ -69,6 +90,8 @@
                 <tr>
                     <th class="ps-4 py-4">Barkod / Ürün</th>
                     <th class="py-4">Kategori</th>
+                    <th class="py-4">Araç uyumu</th>
+                    <th class="py-4">Tip</th>
                     <th class="py-4">Alış / Satış Fiyatı</th>
                     <th class="py-4">KDV</th>
                     <th class="py-4 text-center">Stok</th>
@@ -91,6 +114,37 @@
                         </td>
                         <td class="py-4">
                             <span class="badge bg-surface-container text-on-surface-variant rounded-pill px-3 py-1 font-bold" style="font-size: 0.65rem;">@u.Kategori</span>
+                        </td>
+                        <td class="py-4">
+                            @if (!string.IsNullOrWhiteSpace(u.AracMarkasi) || !string.IsNullOrWhiteSpace(u.AracModeli))
+                            {
+                                <span class="small text-on-surface">@u.AracMarkasi @u.AracModeli</span>
+                                @if (u.ModelYiliBaslangic.HasValue || u.ModelYiliBitis.HasValue)
+                                {
+                                    <div class="text-muted" style="font-size: 0.65rem;">@(u.ModelYiliBaslangic?.ToString() ?? "?")–@(u.ModelYiliBitis?.ToString() ?? "?")</div>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted small">—</span>
+                            }
+                        </td>
+                        <td class="py-4">
+                            @if (u.ParcaTipi.HasValue)
+                            {
+                                var tipText = u.ParcaTipi.Value switch
+                                {
+                                    ParcaTipi.Orjinal => "Orijinal",
+                                    ParcaTipi.YanSanayi => "Yan sanayi",
+                                    ParcaTipi.Revizyon => "Revizyon",
+                                    _ => u.ParcaTipi.Value.ToString()
+                                };
+                                <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1" style="font-size: 0.65rem;">@tipText</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">—</span>
+                            }
                         </td>
                         <td class="py-4">
                             <div class="d-flex flex-column">
@@ -143,11 +197,15 @@
     @await Html.PartialAsync("_Pagination", new PaginationInfo { 
         CurrentPage = Model.CurrentPage, 
         TotalPages = Model.TotalPages, 
-        RouteValues = new Dictionary<string, string> { 
+        RouteValues = new Dictionary<string, string> {
             { "arama", Model.Arama ?? "" },
             { "kategori", Model.Kategori ?? "" },
             { "tedarikciId", Model.TedarikciId?.ToString() ?? "" },
-            { "stokDurumu", Model.StokDurumu ?? "" }
+            { "stokDurumu", Model.StokDurumu ?? "" },
+            { "aracMarkasi", Model.AracMarkasi ?? "" },
+            { "aracModeli", Model.AracModeli ?? "" },
+            { "parcaTipi", Model.ParcaTipi.HasValue ? ((int)Model.ParcaTipi.Value).ToString() : "" },
+            { "parcaKoduArama", Model.ParcaKoduArama ?? "" }
         } 
     })
 }

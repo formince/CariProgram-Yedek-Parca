@@ -10,14 +10,20 @@ public class AyarService : IAyarService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IMemoryCache _cache;
-    private const string CacheKey = "isletme_ayarlar";
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(60);
 
-    public AyarService(IServiceScopeFactory scopeFactory, IMemoryCache cache)
+    public AyarService(IServiceScopeFactory scopeFactory, IMemoryCache cache, IHttpContextAccessor httpContextAccessor)
     {
         _scopeFactory = scopeFactory;
         _cache = cache;
+        _httpContextAccessor = httpContextAccessor;
     }
+
+    private string CacheKey =>
+        _httpContextAccessor.HttpContext?.Items["TenantInfo"] is TenantInfo t && !string.IsNullOrEmpty(t.Subdomain)
+            ? $"isletme_ayarlar_{t.Subdomain}"
+            : "isletme_ayarlar_default";
 
     public async Task<string?> GetAsync(string anahtar)
     {

@@ -2,6 +2,23 @@
 @{
     ViewData["Title"] = "Ürün Detay";
     var hareketler = ViewBag.Hareketler as List<StokHareket> ?? new List<StokHareket>();
+    string ParcaTipiEtiket(ParcaTipi t) => t switch
+    {
+        ParcaTipi.Orjinal => "Orijinal",
+        ParcaTipi.YanSanayi => "Yan sanayi",
+        ParcaTipi.Revizyon => "Revizyon",
+        _ => t.ToString()
+    };
+    string KodTipiEtiket(ParcaKoduTipi t) => t switch
+    {
+        ParcaKoduTipi.EskiKod => "Eski kod",
+        ParcaKoduTipi.OEM => "OEM",
+        ParcaKoduTipi.Uretici => "Üretici",
+        ParcaKoduTipi.Tedarikci => "Tedarikçi",
+        ParcaKoduTipi.Barkod => "Barkod",
+        ParcaKoduTipi.Muadil => "Muadil",
+        _ => t.ToString()
+    };
 }
 <div class="mb-4">
     <a asp-action="Index" class="btn btn-link text-decoration-none mb-2">← Ürün listesine dön</a>
@@ -13,7 +30,7 @@
         <div class="col-md-6">
             <p class="mb-1"><strong>Ad:</strong> @Model.Ad</p>
             <p class="mb-1"><strong>Barkod:</strong> @(Model.Barkod ?? "-")</p>
-            <p class="mb-1"><strong>Marka:</strong> @Model.Kategori</p>
+            <p class="mb-1"><strong>Marka / kategori:</strong> @Model.Kategori</p>
             <p class="mb-1"><strong>Birim Fiyat:</strong> @Model.BirimFiyat.ToTrParaMoney()</p>
         </div>
         <div class="col-md-6">
@@ -26,6 +43,50 @@
         </div>
     </div>
 </div>
+
+<div class="stat-card mb-4">
+    <h5 class="mb-3">Araç uyumluluk</h5>
+    <div class="row">
+        <div class="col-md-6">
+            <p class="mb-1"><strong>Marka / model:</strong> @(string.Join(" ", new[] { Model.AracMarkasi, Model.AracModeli }.Where(s => !string.IsNullOrWhiteSpace(s))).Trim())</p>
+            <p class="mb-1"><strong>Model yılı:</strong> @(Model.ModelYiliBaslangic.HasValue || Model.ModelYiliBitis.HasValue ? $"{Model.ModelYiliBaslangic?.ToString() ?? "?"} – {Model.ModelYiliBitis?.ToString() ?? "?"}" : "—")</p>
+        </div>
+        <div class="col-md-6">
+            <p class="mb-1"><strong>Motor:</strong> @(Model.MotorTipi ?? "—")</p>
+            <p class="mb-1"><strong>Parça tipi:</strong> @(Model.ParcaTipi.HasValue ? ParcaTipiEtiket(Model.ParcaTipi.Value) : "—")</p>
+        </div>
+    </div>
+</div>
+
+<h5 class="mb-3">Parça kodları</h5>
+@if (Model.ParcaKodlari.Any())
+{
+    <div class="table-wrapper mb-4">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Tip</th>
+                    <th>Kod</th>
+                    <th>Açıklama</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var pk in Model.ParcaKodlari.OrderBy(p => p.KodTipi).ThenBy(p => p.Kod))
+                {
+                    <tr>
+                        <td><span class="badge bg-secondary-subtle text-secondary-emphasis">@KodTipiEtiket(pk.KodTipi)</span></td>
+                        <td class="font-monospace">@pk.Kod</td>
+                        <td>@(pk.Aciklama ?? "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <p class="text-muted mb-4">Bu ürüne tanımlı parça kodu yok.</p>
+}
 
 <h5 class="mb-3">Son 20 Stok Hareketi</h5>
 @if (hareketler.Any())

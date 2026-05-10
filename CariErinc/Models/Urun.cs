@@ -2,6 +2,13 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CariErinc.Models;
 
+public enum ParcaTipi
+{
+    Orjinal = 0,
+    YanSanayi = 1,
+    Revizyon = 2
+}
+
 public class Urun
 {
     public int Id { get; set; }
@@ -33,6 +40,22 @@ public class Urun
 
     public int? CariId { get; set; }
     public Cari? Cari { get; set; }
+
+    [MaxLength(100)]
+    public string? AracMarkasi { get; set; }
+
+    [MaxLength(100)]
+    public string? AracModeli { get; set; }
+
+    public int? ModelYiliBaslangic { get; set; }
+    public int? ModelYiliBitis { get; set; }
+
+    [MaxLength(50)]
+    public string? MotorTipi { get; set; }
+
+    public ParcaTipi? ParcaTipi { get; set; }
+
+    public ICollection<ParcaKodu> ParcaKodlari { get; set; } = new List<ParcaKodu>();
 
     public DateTime OlusturulmaTarihi { get; set; } = DateTime.UtcNow;
     public DateTime GuncellenmeTarihi { get; set; }

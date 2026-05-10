@@ -68,6 +68,90 @@
                             </div>
                         </div>
 
+                        <!-- Araç uyumluluk -->
+                        <div class="row g-3 mb-4 pt-4 border-top border-dashed">
+                            <div class="col-12 d-flex align-items-center gap-2 mb-1">
+                                <span class="material-symbols-outlined text-primary fs-5">directions_car</span>
+                                <h6 class="mb-0 text-primary fw-bold">Araç uyumluluk bilgileri</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="AracMarkasi" class="form-label-caps"></label>
+                                <input asp-for="AracMarkasi" class="form-control-ghost" placeholder="Örn. Ford" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="AracModeli" class="form-label-caps"></label>
+                                <input asp-for="AracModeli" class="form-control-ghost" placeholder="Örn. Focus" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="ModelYiliBaslangic" class="form-label-caps"></label>
+                                <input asp-for="ModelYiliBaslangic" type="number" class="form-control-ghost" placeholder="2015" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="ModelYiliBitis" class="form-label-caps"></label>
+                                <input asp-for="ModelYiliBitis" type="number" class="form-control-ghost" placeholder="2018" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="MotorTipi" class="form-label-caps"></label>
+                                <input asp-for="MotorTipi" class="form-control-ghost" placeholder="Örn. 1.6 TDCi" />
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ParcaTipi" class="form-label-caps"></label>
+                                <select asp-for="ParcaTipi" class="form-select form-select-ghost">
+                                    <option value="">— Seçiniz —</option>
+                                    <option value="@((int)ParcaTipi.Orjinal)">Orijinal</option>
+                                    <option value="@((int)ParcaTipi.YanSanayi)">Yan sanayi</option>
+                                    <option value="@((int)ParcaTipi.Revizyon)">Revizyon</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Parça kodları -->
+                        <div class="row g-3 mb-4 pt-4 border-top border-dashed">
+                            <div class="col-12 d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary fs-5">qr_code</span>
+                                    <h6 class="mb-0 text-primary fw-bold">Parça kodları</h6>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-3" id="parcaKoduSatirEkle">
+                                    <span class="material-symbols-outlined align-middle fs-6">add</span> Satır ekle
+                                </button>
+                            </div>
+                            <div class="col-12">
+                                <div class="table-responsive rounded-3 border">
+                                    <table class="table table-sm mb-0 align-middle">
+                                        <thead class="table-light extra-small text-uppercase text-muted">
+                                            <tr>
+                                                <th style="width:9rem;">Tip</th>
+                                                <th>Kod</th>
+                                                <th>Açıklama</th>
+                                                <th style="width:3rem;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="parcaKoduTbody">
+                                            @for (var i = 0; i < Model.ParcaKodlari.Count; i++)
+                                            {
+                                                <tr class="parca-kodu-satir" data-parca-row>
+                                                    <td>
+                                                        <input type="hidden" asp-for="ParcaKodlari[i].Id" />
+                                                        <select asp-for="ParcaKodlari[i].KodTipi" class="form-select form-select-sm"
+                                                                asp-items="Html.GetEnumSelectList<ParcaKoduTipi>()"></select>
+                                                    </td>
+                                                    <td><input asp-for="ParcaKodlari[i].Kod" class="form-control form-control-sm" placeholder="Kod" /></td>
+                                                    <td><input asp-for="ParcaKodlari[i].Aciklama" class="form-control form-control-sm" placeholder="İsteğe bağlı" /></td>
+                                                    <td class="text-end">
+                                                        <button type="button" class="btn btn-sm btn-link text-danger parca-kodu-sil p-1" title="Satırı sil">
+                                                            <span class="material-symbols-outlined fs-6">delete</span>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p class="text-muted extra-small mt-2 mb-0">OEM, üretici, muadil vb. kodları ekleyin. <strong>Barkod</strong> tipi diğer ürün barkodlarıyla çakışmamalıdır.</p>
+                            </div>
+                        </div>
+
                         <!-- Fiyat ve Stok -->
                         <div class="row g-4 pt-4 border-top">
                             <div class="col-md-6">
@@ -183,6 +267,50 @@
 
 @section Scripts {
     <partial name="_ValidationScripts" />
+    <script>
+        (function () {
+            const tbody = document.getElementById('parcaKoduTbody');
+            const btnEkle = document.getElementById('parcaKoduSatirEkle');
+            const form = tbody ? tbody.closest('form') : null;
+            if (!tbody || !form) return;
+
+            const tipSecenekler = '<option value="0">OEM</option><option value="1">Uretici</option><option value="2">Tedarikci</option><option value="3">Barkod</option><option value="4">EskiKod</option><option value="5">Muadil</option>';
+
+            function reindexParcaKodlari() {
+                [...tbody.querySelectorAll('tr[data-parca-row]')].forEach((row, i) => {
+                    row.querySelectorAll('input[name], select[name]').forEach(el => {
+                        const n = el.getAttribute('name');
+                        if (n) el.setAttribute('name', n.replace(/ParcaKodlari\[\d+\]/, 'ParcaKodlari[' + i + ']'));
+                    });
+                });
+            }
+
+            function yeniSatir() {
+                const i = tbody.querySelectorAll('tr[data-parca-row]').length;
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-parca-row', '');
+                tr.className = 'parca-kodu-satir';
+                tr.innerHTML =
+                    '<td><input type="hidden" name="ParcaKodlari[' + i + '].Id" value="0" />' +
+                    '<select name="ParcaKodlari[' + i + '].KodTipi" class="form-select form-select-sm">' + tipSecenekler + '</select></td>' +
+                    '<td><input name="ParcaKodlari[' + i + '].Kod" class="form-control form-control-sm" placeholder="Kod" /></td>' +
+                    '<td><input name="ParcaKodlari[' + i + '].Aciklama" class="form-control form-control-sm" placeholder="İsteğe bağlı" /></td>' +
+                    '<td class="text-end"><button type="button" class="btn btn-sm btn-link text-danger parca-kodu-sil p-1" title="Satırı sil"><span class="material-symbols-outlined fs-6">delete</span></button></td>';
+                tbody.appendChild(tr);
+            }
+
+            tbody.addEventListener('click', function (e) {
+                const sil = e.target.closest('.parca-kodu-sil');
+                if (!sil) return;
+                const row = sil.closest('tr[data-parca-row]');
+                if (row) { row.remove(); reindexParcaKodlari(); }
+            });
+
+            btnEkle.addEventListener('click', function () { yeniSatir(); });
+
+            form.addEventListener('submit', function () { reindexParcaKodlari(); });
+        })();
+    </script>
     @if (!isNew)
     {
         <script>
