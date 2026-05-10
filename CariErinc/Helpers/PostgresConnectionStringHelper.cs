@@ -5,8 +5,23 @@ namespace CariErinc.Helpers;
 public static class PostgresConnectionStringHelper
 {
     /// <summary>
-    /// Railway DATABASE_URL (postgresql://user:şifre@host:5432/db) → Npgsql anahtar=değer.
-    /// Ham URI bazen şifreyi iletmez / GSS dener; burada açıkça User/Password ve GSS kapatılır.
+    /// postgresql:// URL veya Host=... connection string — Npgsql'in anladığı anahtar=değer biçimine çevirir.
+    /// </summary>
+    public static string? NormalizeForNpgsql(string? connectionStringOrUrl)
+    {
+        if (string.IsNullOrWhiteSpace(connectionStringOrUrl))
+            return null;
+
+        var s = connectionStringOrUrl.Trim().Trim('"');
+        if (s.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)
+            || s.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+            return ToNpgsqlConnectionString(s);
+
+        return ApplyRailwayDefaults(s);
+    }
+
+    /// <summary>
+    /// Railway DATABASE_URL (postgresql://user:şifre@host:port/db) → Npgsql anahtar=değer.
     /// </summary>
     public static string? ToNpgsqlConnectionString(string? databaseUrl)
     {

@@ -43,6 +43,16 @@ if (!string.IsNullOrWhiteSpace(connStr) && connStr.Contains("{PGHOST}"))
     builder.Configuration["ConnectionStrings:DefaultConnection"] = connStr;
 }
 
+// AdminConnection / manuel env genelde postgresql:// gelir; Npgsql sadece key=value ister.
+foreach (var connKey in new[] { "DefaultConnection", "AdminConnection" })
+{
+    var section = $"ConnectionStrings:{connKey}";
+    var raw = builder.Configuration[section];
+    var norm = PostgresConnectionStringHelper.NormalizeForNpgsql(raw);
+    if (!string.IsNullOrEmpty(norm))
+        builder.Configuration[section] = norm;
+}
+
 // Services — uygulama DB (isteğe bağlı tenant connection ile factory)
 var adminConnection = builder.Configuration.GetConnectionString("AdminConnection");
 if (!string.IsNullOrEmpty(adminConnection))
