@@ -9,18 +9,24 @@ using Microsoft.EntityFrameworkCore;
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var builder = WebApplication.CreateBuilder(args);
 
-// Railway: DATABASE_URL environment variable'ını configuration'a at
-var railwayDbUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-if (!string.IsNullOrWhiteSpace(railwayDbUrl))
+// Railway: appsettings.json'daki placeholder'ları Postgres environment variable'larıyla değiştir
+var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+if (!string.IsNullOrWhiteSpace(connStr) && connStr.Contains("{PGHOST}"))
 {
-    // Eğer appsettings'de boş ise, DATABASE_URL'yi kullan
-    var defaultConn = builder.Configuration.GetConnectionString("DefaultConnection");
-    if (string.IsNullOrWhiteSpace(defaultConn))
-        builder.Configuration["ConnectionStrings:DefaultConnection"] = railwayDbUrl;
+    var pgHost = Environment.GetEnvironmentVariable("PGHOST") ?? "postgres.railway.internal";
+    var pgPort = Environment.GetEnvironmentVariable("PGPORT") ?? "5432";
+    var pgUser = Environment.GetEnvironmentVariable("PGUSER") ?? "postgres";
+    var pgPassword = Environment.GetEnvironmentVariable("PGPASSWORD") ?? "";
+    var pgDatabase = Environment.GetEnvironmentVariable("PGDATABASE") ?? "postgres";
 
-    var railwayAdminConn = builder.Configuration.GetConnectionString("AdminConnection");
-    if (string.IsNullOrWhiteSpace(railwayAdminConn))
-        builder.Configuration["ConnectionStrings:AdminConnection"] = railwayDbUrl;
+    connStr = connStr
+        .Replace("{PGHOST}", pgHost)
+        .Replace("{PGPORT}", pgPort)
+        .Replace("{PGUSER}", pgUser)
+        .Replace("{PGPASSWORD}", pgPassword)
+        .Replace("{PGDATABASE}", pgDatabase);
+
+    builder.Configuration["ConnectionStrings:DefaultConnection"] = connStr;
 }
 
 // Services — uygulama DB (isteğe bağlı tenant connection ile factory)
