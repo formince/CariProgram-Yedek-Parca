@@ -27,6 +27,8 @@ public static class PostgresConnectionStringHelper
             return !string.IsNullOrEmpty(normalized);
         }
 
+        s = StripObsoleteNpgsqlPairKeys(s);
+
         try
         {
             normalized = ApplyRailwayDefaults(s);
@@ -114,6 +116,22 @@ public static class PostgresConnectionStringHelper
         };
 
         return builder.ConnectionString;
+    }
+
+    /// <summary>
+    /// Npgsql 7+ artık desteklemez; DB'ye yapıştırılan eski string'ler builder'ı bozuyor.
+    /// </summary>
+    private static string StripObsoleteNpgsqlPairKeys(string connectionString)
+    {
+        var parts = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var kept = parts.Where(p =>
+        {
+            var keyEnd = p.IndexOf('=');
+            var key = keyEnd > 0 ? p[..keyEnd].Trim() : p;
+            return !key.Equals("Trust Server Certificate", StringComparison.OrdinalIgnoreCase)
+                   && !key.Equals("TrustServerCertificate", StringComparison.OrdinalIgnoreCase);
+        });
+        return string.Join(';', kept);
     }
 
     private static string ApplyRailwayDefaults(string connectionString)

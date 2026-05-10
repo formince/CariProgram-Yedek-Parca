@@ -1,3 +1,4 @@
+using CariErinc.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using CariErinc.Services;
@@ -22,7 +23,12 @@ public class TenantDbContextFactory
 
         if (_httpContextAccessor.HttpContext?.Items["TenantInfo"] is TenantInfo tenantInfo
             && !string.IsNullOrWhiteSpace(tenantInfo.ConnectionString))
+        {
             connStr = tenantInfo.ConnectionString;
+            if (PostgresConnectionStringHelper.TryNormalizeForNpgsql(connStr, out var norm)
+                && !string.IsNullOrEmpty(norm))
+                connStr = norm;
+        }
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(connStr)
