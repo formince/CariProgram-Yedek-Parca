@@ -23,6 +23,25 @@ if (!string.IsNullOrEmpty(npgsqlFromRailway))
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Railway: appsettings.json'daki placeholder'ları Postgres environment variable'larıyla değiştir
+var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+if (!string.IsNullOrWhiteSpace(connStr) && connStr.Contains("{PGHOST}"))
+{
+    var pgHost = Environment.GetEnvironmentVariable("PGHOST") ?? "postgres.railway.internal";
+    var pgPort = Environment.GetEnvironmentVariable("PGPORT") ?? "5432";
+    var pgUser = Environment.GetEnvironmentVariable("PGUSER") ?? "postgres";
+    var pgPassword = Environment.GetEnvironmentVariable("PGPASSWORD") ?? "";
+    var pgDatabase = Environment.GetEnvironmentVariable("PGDATABASE") ?? "postgres";
+
+    connStr = connStr
+        .Replace("{PGHOST}", pgHost)
+        .Replace("{PGPORT}", pgPort)
+        .Replace("{PGUSER}", pgUser)
+        .Replace("{PGPASSWORD}", pgPassword)
+        .Replace("{PGDATABASE}", pgDatabase);
+
+    builder.Configuration["ConnectionStrings:DefaultConnection"] = connStr;
+}
 
 // Services — uygulama DB (isteğe bağlı tenant connection ile factory)
 var adminConnection = builder.Configuration.GetConnectionString("AdminConnection");
