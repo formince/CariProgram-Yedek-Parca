@@ -160,7 +160,7 @@ app.MapControllerRoute(
 // Veritabanı yoksa oluştur (PostgreSQL)
 static async Task EnsurePostgreDatabaseExistsAsync(string? connectionString)
 {
-    if (string.IsNullOrEmpty(connectionString))
+    if (string.IsNullOrWhiteSpace(connectionString))
         return;
 
     var builderConn = new Npgsql.NpgsqlConnectionStringBuilder(connectionString);
@@ -184,9 +184,26 @@ var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnec
 var adminConn = builder.Configuration.GetConnectionString("AdminConnection");
 var multiTenant = builder.Configuration.GetValue<bool>("MultiTenant:Enabled");
 
-await EnsurePostgreDatabaseExistsAsync(defaultConnection);
+try
+{
+    await EnsurePostgreDatabaseExistsAsync(defaultConnection);
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Warning: Could not ensure database exists: {ex.Message}");
+}
+
 if (!string.IsNullOrEmpty(adminConn))
-    await EnsurePostgreDatabaseExistsAsync(adminConn);
+{
+    try
+    {
+        await EnsurePostgreDatabaseExistsAsync(adminConn);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Warning: Could not ensure admin database exists: {ex.Message}");
+    }
+}
 
 if (!string.IsNullOrEmpty(adminConn))
 {
