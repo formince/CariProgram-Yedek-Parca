@@ -406,9 +406,7 @@ body {
   .sidebar.show {
     transform: translateX(0);
   }
-  .sidebar-overlay {
-    display: block;
-  }
+
   .top-navbar {
     left: 0;
   }

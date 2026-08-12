@@ -35,3 +35,7 @@ publish/
 # Temp
 *.tmp
 *.temp
+
+# Yedeklenen git klasörleri (eski iç repo yedeği vb.)
+*.git.bak/
+*.git.bak-*/
