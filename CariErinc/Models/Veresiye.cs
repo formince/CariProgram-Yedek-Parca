@@ -2,7 +2,7 @@ namespace CariErinc.Models;
 
 public enum OdenmeDurumu { Bekliyor, KismiOdendi, Odendi, Iptal }
 
-public enum VeresiyeTipi { SatisBagli = 0, Elden = 1 }
+public enum VeresiyeTipi { SatisBagli = 0, Elden = 1, Avans = 2 }
 
 public class Veresiye
 {

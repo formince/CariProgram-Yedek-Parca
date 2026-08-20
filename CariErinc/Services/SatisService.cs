@@ -3,6 +3,7 @@ using CariErinc.Helpers;
 using CariErinc.Models;
 using CariErinc.Services.Interfaces;
 using CariErinc.ViewModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace CariErinc.Services;
@@ -16,19 +17,25 @@ public class SatisService : ISatisService
     private readonly IAyarService _ayarService;
     private readonly IKasaService _kasaService;
     private readonly IStokService _stokService;
+    private readonly IVeresiyeService _veresiyeService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public SatisService(
         AppDbContext db,
         IAuditLogService auditLog,
         IAyarService ayarService,
         IKasaService kasaService,
-        IStokService stokService)
+        IStokService stokService,
+        IVeresiyeService veresiyeService,
+        IHttpContextAccessor httpContextAccessor)
     {
         _db = db;
         _auditLog = auditLog;
         _ayarService = ayarService;
         _kasaService = kasaService;
         _stokService = stokService;
+        _veresiyeService = veresiyeService;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<List<Satis>> GetAllAsync(int? musteriId, OdemeTipi? tip, DateTime? baslangic, DateTime? bitis, bool dahilIptaller = false)
@@ -594,7 +601,20 @@ public class SatisService : ISatisService
             return;
 
         satis.CariId = musteri.CariId;
-        _db.Veresiyeler.Add(CreateSatisVeresiye(satis, musteri, aciklama));
+
+        // Önce avanstan düş (FIFO). Kalan tutar veresiye olarak yazılır.
+        var avansKullanildi = await _veresiyeService.AvansDusCoreAsync(
+            musteri.CariId ?? 0,
+            satis.ToplamTutar,
+            $"Satış #{satis.Id} avans kullanımı",
+            _httpContextAccessor.HttpContext?.User?.Identity?.Name);
+
+        if (avansKullanildi.KalanTutar > 0)
+        {
+            // Avans tamamen karşılamadı — kalan kısmı yeni veresiye olarak açılır.
+            _db.Veresiyeler.Add(CreateSatisVeresiye(satis, musteri, aciklama, avansKullanildi.KalanTutar));
+        }
+        // else: avans tüm tutarı karşıladı, yeni veresiye açılmaz.
     }
 
     private async Task RevertSatisYanEtkileriAsync(Satis satis)
@@ -624,14 +644,14 @@ public class SatisService : ISatisService
         satis.CariId = seciliMusteri?.CariId;
     }
 
-    private static Veresiye CreateSatisVeresiye(Satis satis, Musteri musteri, string? aciklama)
+    private static Veresiye CreateSatisVeresiye(Satis satis, Musteri musteri, string? aciklama, decimal? tutarOverride = null)
     {
         return new Veresiye
         {
             CariId = musteri.CariId,
             MusteriId = musteri.Id,
             SatisId = satis.Id,
-            Tutar = satis.ToplamTutar,
+            Tutar = tutarOverride ?? satis.ToplamTutar,
             Aciklama = aciklama?.Trim() ?? $"Satış #{satis.Id}",
             Tarih = DateTime.UtcNow,
             OdenmeDurumu = OdenmeDurumu.Bekliyor

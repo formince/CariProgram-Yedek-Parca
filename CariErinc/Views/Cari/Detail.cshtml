@@ -16,15 +16,23 @@
 </div>
 
 <div class="row g-3 mb-4">
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small">Alacak</div>
+                <div class="text-muted small">Alacak (Borçlar)</div>
                 <div class="h4 text-success mb-0">@Model.AlacakToplam.ToTrParaMoney()</div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Avans (Biriken)</div>
+                <div class="h4 text-primary mb-0">@Model.AvansToplam.ToTrParaMoney()</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="text-muted small">Verecek</div>
@@ -32,11 +40,15 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
-                <div class="text-muted small">Net</div>
+                <div class="text-muted small">Net Bakiye</div>
                 <div class="h4 mb-0 @(Model.NetBakiye >= 0 ? "text-primary" : "text-warning")">@Model.NetBakiye.ToTrParaMoney()</div>
+                @if (Model.NetBakiye < 0)
+                {
+                    <div class="small text-muted">biz borçluyuz</div>
+                }
             </div>
         </div>
     </div>
@@ -44,80 +56,326 @@
 
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0">Alacak Yönetimi (Veresiye)</h5>
-            @if (Model.MusteriRoluVar)
-            {
-                <a asp-controller="Veresiye" asp-action="Form" asp-route-musteriId="@Model.MusteriId" class="btn btn-sm btn-outline-primary">Veresiye Ekle</a>
-            }
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h5 class="fw-bold mb-0">
+                <span class="material-symbols-outlined align-middle me-1">account_balance</span>
+                Müşteri Hesap Özeti
+                <span class="badge bg-light text-dark ms-2 small">@Model.TarihFiltreAraligi</span>
+            </h5>
         </div>
-        @if (Model.AcikVeresiyeler.Any())
+
+        <form method="get" class="border rounded p-3 mb-3 bg-light-subtle">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label for="baslangic" class="form-label small mb-1">Başlangıç</label>
+                    <input type="date" name="baslangic" id="baslangic" class="form-control form-control-sm"
+                           value="@(Model.Baslangic?.ToString("yyyy-MM-dd"))" />
+                </div>
+                <div class="col-md-3">
+                    <label for="bitis" class="form-label small mb-1">Bitiş</label>
+                    <input type="date" name="bitis" id="bitis" class="form-control form-control-sm"
+                           value="@(Model.Bitis?.ToString("yyyy-MM-dd"))" />
+                </div>
+                <div class="col-md-3 d-grid">
+                    <button type="submit" class="btn btn-sm btn-primary">Filtrele</button>
+                </div>
+                <div class="col-md-3 d-grid">
+                    <a asp-action="Detail" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-secondary">Tüm Zamanlar</a>
+                </div>
+            </div>
+            <div class="mt-2 d-flex flex-wrap gap-1">
+                <a asp-action="Detail" asp-route-id="@Model.Id"
+                   asp-route-baslangic="@DateTime.Today.ToString("yyyy-MM-dd")"
+                   asp-route-bitis="@DateTime.Today.ToString("yyyy-MM-dd")"
+                   class="btn btn-sm btn-outline-primary">Bugün</a>
+                @{
+                    var haftabasi = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek + (int)DayOfWeek.Monday);
+                    if (haftabasi > DateTime.Today) haftabasi = haftabasi.AddDays(-7);
+                }
+                <a asp-action="Detail" asp-route-id="@Model.Id"
+                   asp-route-baslangic="@haftabasi.ToString("yyyy-MM-dd")"
+                   asp-route-bitis="@DateTime.Today.ToString("yyyy-MM-dd")"
+                   class="btn btn-sm btn-outline-primary">Bu Hafta</a>
+                @{
+                    var aybasi = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+                }
+                <a asp-action="Detail" asp-route-id="@Model.Id"
+                   asp-route-baslangic="@aybasi.ToString("yyyy-MM-dd")"
+                   asp-route-bitis="@DateTime.Today.ToString("yyyy-MM-dd")"
+                   class="btn btn-sm btn-outline-primary">Bu Ay</a>
+            </div>
+        </form>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="border rounded p-3 h-100" style="background:#f0f9f4;">
+                    <div class="text-muted small text-uppercase fw-bold">Müşterinin Yatırdığı</div>
+                    <div class="h3 fw-bold text-success mb-2">@Model.ToplamMusteriYatirilan.ToTrParaMoney()</div>
+                    <hr class="my-2" />
+                    <div class="small d-flex justify-content-between">
+                        <span>↳ Borca giden:</span>
+                        <strong class="text-warning">@Model.ToplamBorcOdemesi.ToTrParaMoney()</strong>
+                    </div>
+                    <div class="small d-flex justify-content-between">
+                        <span>↳ Avansa yatan:</span>
+                        <strong class="text-primary">@Model.ToplamAvansYatirma.ToTrParaMoney()</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded p-3 h-100" style="background:#fff8e1;">
+                    <div class="text-muted small text-uppercase fw-bold">Avans Kullanımı</div>
+                    <div class="h3 fw-bold text-warning mb-2">@Model.ToplamAvansKullanimi.ToTrParaMoney()</div>
+                    <div class="small text-muted">
+                        Satışlarda otomatik düşülen avans miktarı
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded p-3 h-100 @(Model.AvansToplam > 0 ? "bg-success-subtle" : "bg-light")">
+                    <div class="text-muted small text-uppercase fw-bold">Mevcut Avans Bakiyesi</div>
+                    <div class="h3 fw-bold @(Model.AvansToplam > 0 ? "text-success" : "text-muted") mb-2">@Model.AvansToplam.ToTrParaMoney()</div>
+                    <div class="small text-muted">
+                        Kullanılabilir avans (henüz harcanmamış)
+                    </div>
+                </div>
+            </div>
+        </div>
+        @if (Model.ToplamMusteriYatirilan > 0)
         {
-            <form asp-action="TopluAlacakTahsilat" method="post" id="topluAlacakForm">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="cariId" value="@Model.Id" />
-                <input type="hidden" name="veresiyeIds" id="topluAlacakIds" />
-                <div class="table-wrapper mb-3">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th style="width:36px;">
-                                    <input type="checkbox" id="tumAlacaklariSec" class="form-check-input" title="Tümünü seç" />
-                                </th>
-                                <th>Tarih</th>
-                                <th class="text-end">Toplam</th>
-                                <th class="text-end">Ödenen</th>
-                                <th class="text-end">Kalan</th>
-                                <th>Durum</th>
-                                <th style="width:80px;">İşlem</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var v in Model.AcikVeresiyeler)
-                            {
+            <div class="mt-3 small text-muted">
+                <span class="material-symbols-outlined align-middle" style="font-size: 1rem;">info</span>
+                <em>Formül: Yatırılan @Model.ToplamMusteriYatirilan.ToTrParaMoney() = @Model.ToplamBorcOdemesi.ToTrParaMoney() (borca) + @Model.ToplamAvansYatirma.ToTrParaMoney() (avansa). Kullanılan avans: @Model.ToplamAvansKullanimi.ToTrParaMoney(). Kalan avans: @Model.AvansToplam.ToTrParaMoney().</em>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">
+                        <span class="material-symbols-outlined align-middle me-1">account_balance_wallet</span>
+                        Borçlar (Veresiyeler)
+                    </h5>
+                    @if (Model.MusteriRoluVar)
+                    {
+                        <a asp-controller="Veresiye" asp-action="Form" asp-route-musteriId="@Model.MusteriId" class="btn btn-sm btn-outline-primary">+ Yeni Veresiye</a>
+                    }
+                </div>
+                @if (Model.Borclar.Any())
+                {
+                    <form asp-action="TopluAlacakTahsilat" method="post" id="topluAlacakForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="cariId" value="@Model.Id" />
+                        <input type="hidden" name="veresiyeIds" id="topluAlacakIds" />
+                        <div class="table-wrapper mb-3">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width:36px;">
+                                            <input type="checkbox" id="tumBorclariSec" class="form-check-input" title="Tümünü seç" />
+                                        </th>
+                                        <th>Tarih</th>
+                                        <th class="text-end">Toplam</th>
+                                        <th class="text-end">Ödenen</th>
+                                        <th class="text-end">Kalan</th>
+                                        <th>Durum</th>
+                                        <th style="width:90px;">İşlem</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var v in Model.Borclar)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox"
+                                                       class="form-check-input alacak-secim"
+                                                       value="@v.Id"
+                                                       data-kalan="@v.KalanBorc.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                                            </td>
+                                            <td>@v.Tarih.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                            <td class="text-end">@v.Tutar.ToTrParaMoney()</td>
+                                            <td class="text-end">@v.OdenenTutar.ToTrParaMoney()</td>
+                                            <td class="text-end text-danger fw-bold">@v.KalanBorc.ToTrParaMoney()</td>
+                                            <td><span class="badge bg-warning text-dark">@v.Durum</span></td>
+                                            <td><a asp-controller="Veresiye" asp-action="Detail" asp-route-id="@v.Id" class="btn btn-sm btn-outline-secondary">Detay</a></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="border rounded p-3 bg-light-subtle">
+                            <div class="small text-muted mb-2">
+                                Seçili: <strong id="seciliAlacakAdet">0</strong> kayıt
+                                <span class="mx-2">|</span>
+                                Toplam Kalan: <strong id="seciliAlacakToplam">0,00 ₺</strong>
+                            </div>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-5">
+                                    <label for="topluTahsilatTutar" class="form-label mb-1">Tahsilat Tutarı</label>
+                                    <input type="text" name="tutar" id="topluTahsilatTutar" class="form-control input-para-tr" inputmode="decimal" value="0,00" required />
+                                </div>
+                                <div class="col-md-5">
+                                    <label for="topluTahsilatAciklama" class="form-label mb-1">Açıklama (opsiyonel)</label>
+                                    <input type="text" name="aciklama" id="topluTahsilatAciklama" class="form-control" maxlength="200" />
+                                </div>
+                                <div class="col-md-2 d-grid">
+                                    <button type="submit" class="btn btn-success" id="topluTahsilatBtn" disabled>Toplu Tahsilat</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="text-muted">Açık borç kaydı yok.</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">
+                        <span class="material-symbols-outlined align-middle me-1">savings</span>
+                        Avanslar
+                    </h5>
+                    @if (Model.MusteriRoluVar)
+                    {
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#avansEkleForm">+ Avans Ekle</button>
+                    }
+                </div>
+
+                <div class="collapse mb-3" id="avansEkleForm">
+                    <form asp-action="AvansEkle" method="post" class="border rounded p-3 bg-light-subtle">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="cariId" value="@Model.Id" />
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-5">
+                                <label for="avansTutar" class="form-label mb-1 small">Avans Tutarı</label>
+                                <input type="text" name="tutar" id="avansTutar" class="form-control input-para-tr" inputmode="decimal" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="avansOdemeTipi" class="form-label mb-1 small">Ödeme</label>
+                                <select name="odemeTipi" id="avansOdemeTipi" class="form-select">
+                                    <option value="Nakit" selected>Nakit</option>
+                                    <option value="Hesap">Hesap (Banka)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-grid">
+                                <button type="submit" class="btn btn-primary">Ekle</button>
+                            </div>
+                            <div class="col-12">
+                                <label for="avansAciklama" class="form-label mb-1 small">Açıklama (opsiyonel)</label>
+                                <input type="text" name="aciklama" id="avansAciklama" class="form-control form-control-sm" maxlength="200" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                @if (Model.Avanslar.Any())
+                {
+                    <div class="table-wrapper">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
                                 <tr>
-                                    <td>
-                                        <input type="checkbox"
-                                               class="form-check-input alacak-secim"
-                                               value="@v.Id"
-                                               data-kalan="@v.KalanBorc.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
-                                    </td>
-                                    <td>@v.Tarih.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
-                                    <td class="text-end">@v.Tutar.ToTrParaMoney()</td>
-                                    <td class="text-end">@v.OdenenTutar.ToTrParaMoney()</td>
-                                    <td class="text-end text-danger fw-bold">@v.KalanBorc.ToTrParaMoney()</td>
-                                    <td>@v.Durum</td>
-                                    <td><a asp-controller="Veresiye" asp-action="Detail" asp-route-id="@v.Id" class="btn btn-sm btn-outline-secondary">Detay</a></td>
+                                    <th>Tarih</th>
+                                    <th class="text-end">Tutar</th>
+                                    <th class="text-end">Kullanılan</th>
+                                    <th class="text-end">Kalan</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-                <div class="border rounded p-3 bg-light-subtle">
-                    <div class="small text-muted mb-2">
-                        Seçili: <strong id="seciliAlacakAdet">0</strong> kayıt
-                        <span class="mx-2">|</span>
-                        Toplam Kalan: <strong id="seciliAlacakToplam">0,00 ₺</strong>
+                            </thead>
+                            <tbody>
+                                @foreach (var v in Model.Avanslar)
+                                {
+                                    <tr class="table-success">
+                                        <td>@v.Tarih.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td class="text-end">@v.Tutar.ToTrParaMoney()</td>
+                                        <td class="text-end">@v.OdenenTutar.ToTrParaMoney()</td>
+                                        <td class="text-end fw-bold text-success">@v.KalanBorc.ToTrParaMoney()</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-light">
+                                    <th colspan="3" class="text-end">Toplam Kullanılabilir Avans:</th>
+                                    <th class="text-end text-success">@Model.AvansToplam.ToTrParaMoney()</th>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
-                    <div class="row g-2 align-items-end">
-                        <div class="col-md-4">
-                            <label for="topluTahsilatTutar" class="form-label mb-1">Tahsilat Tutarı</label>
-                            <input type="text" name="tutar" id="topluTahsilatTutar" class="form-control input-para-tr" inputmode="decimal" value="0,00" required />
-                        </div>
-                        <div class="col-md-5">
-                            <label for="topluTahsilatAciklama" class="form-label mb-1">Açıklama (opsiyonel)</label>
-                            <input type="text" name="aciklama" id="topluTahsilatAciklama" class="form-control" maxlength="200" />
-                        </div>
-                        <div class="col-md-3 d-grid">
-                            <button type="submit" class="btn btn-success" id="topluTahsilatBtn" disabled>Toplu Tahsilat</button>
-                        </div>
-                    </div>
-                </div>
-            </form>
+                }
+                else
+                {
+                    <div class="text-muted small">Bu carinin avansı yok. "+ Avans Ekle" ile başlayabilirsiniz.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="fw-bold mb-3">
+            <span class="material-symbols-outlined align-middle me-1">receipt_long</span>
+            Tahsilatlar & Avans Hareketleri
+            <span class="badge bg-secondary ms-2">@Model.Odemeler.Count</span>
+        </h5>
+        @if (Model.Odemeler.Any())
+        {
+            <div class="table-wrapper">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Tip</th>
+                            <th>Kaynak</th>
+                            <th class="text-end">Tutar</th>
+                            <th>Ödeme</th>
+                            <th>Kullanıcı</th>
+                            <th>Açıklama</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var o in Model.Odemeler)
+                        {
+                            var isAvans = o.VeresiyeTip == "Avans";
+                            <tr class="@(isAvans ? "table-success" : "")">
+                                <td>@o.Tarih.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>
+                                    @if (isAvans)
+                                    {
+                                        <span class="badge bg-success">AVANS YATIRMA</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">BORÇ ÖDEMESİ</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a asp-controller="Veresiye" asp-action="Detail" asp-route-id="@o.VeresiyeId" class="text-decoration-none">
+                                        Veresiye #@o.VeresiyeId
+                                    </a>
+                                </td>
+                                <td class="text-end fw-bold">@o.Tutar.ToTrParaMoney()</td>
+                                <td><span class="badge bg-light text-dark">@o.OdemeTipi</span></td>
+                                <td class="small">@(o.KullaniciId ?? "-")</td>
+                                <td class="small text-muted">@(o.Aciklama ?? "-")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
         else
         {
-            <div class="text-muted">Açık veresiye kaydı yok.</div>
+            <div class="text-muted">Bu cariden henüz tahsilat alınmadı.</div>
         }
     </div>
 </div>
@@ -169,7 +427,7 @@
     <div class="card-body">
         <h5 class="fw-bold mb-2">Kronolojik hareket raporu</h5>
         <p class="text-muted small mb-3">
-            Bu cariye ait tüm satışlar, veresiye tahsilatları, alışlar ve ödemeleri tarih sırasıyla görmek için hareket raporuna geçin.
+            Bu cariye ait tüm satışlar, veresiye tahsilatları, avans hareketleri, alışlar ve ödemeleri tarih sırasıyla görmek için hareket raporuna geçin.
         </p>
         <a asp-action="Ekstre" asp-route-id="@Model.Id" class="btn btn-primary">Hareket raporunu aç</a>
     </div>
@@ -179,7 +437,7 @@
     <script>
         (function () {
             const secimler = Array.from(document.querySelectorAll(".alacak-secim"));
-            const tumunuSec = document.getElementById("tumAlacaklariSec");
+            const tumunuSec = document.getElementById("tumBorclariSec");
             const seciliAdet = document.getElementById("seciliAlacakAdet");
             const seciliToplam = document.getElementById("seciliAlacakToplam");
             const idsInput = document.getElementById("topluAlacakIds");
@@ -191,18 +449,14 @@
                 return;
 
             function parseInputDecimal(value) {
-                if (!value)
-                    return 0;
-
+                if (!value) return 0;
                 const normalized = value.toString().replace(/\./g, "").replace(",", ".");
                 const parsed = Number.parseFloat(normalized);
                 return Number.isFinite(parsed) ? parsed : 0;
             }
 
             function parseDataDecimal(value) {
-                if (!value)
-                    return 0;
-
+                if (!value) return 0;
                 const parsed = Number.parseFloat(value.toString());
                 return Number.isFinite(parsed) ? parsed : 0;
             }

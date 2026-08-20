@@ -26,10 +26,12 @@ public class CariController : BaseController
     }
 
     [HttpGet]
-    public async Task<IActionResult> Detail(int id)
+    public async Task<IActionResult> Detail(int id, string? baslangic = null, string? bitis = null)
     {
         if (id <= 0) return RedirectToAction(nameof(Index));
-        var vm = await _cariService.GetDetayVMAsync(id);
+        var parsedBaslangic = ParseDate(baslangic);
+        var parsedBitis = ParseDate(bitis);
+        var vm = await _cariService.GetDetayVMAsync(id, parsedBaslangic, parsedBitis);
         if (vm == null) return RedirectToAction(nameof(Index));
         ViewData["Title"] = $"Cari: {vm.Ad}";
         return View(vm);
@@ -145,6 +147,33 @@ public class CariController : BaseController
         var result = await _veresiyeService.KompleKapatAsync(idList, tutar, User.Identity?.Name);
         if (result.IsSuccess)
             TempBasarili(string.IsNullOrWhiteSpace(aciklama) ? result.Message : $"{result.Message} ({aciklama.Trim()})");
+        else
+            TempHata(result.Message);
+
+        return RedirectToAction(nameof(Detail), new { id = cariId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AvansEkle(int cariId, decimal tutar, string? aciklama, string? odemeTipi)
+    {
+        if (cariId <= 0)
+        {
+            TempHata("Geçersiz cari.");
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (tutar <= 0)
+        {
+            TempHata("Avans tutarı 0'dan büyük olmalıdır.");
+            return RedirectToAction(nameof(Detail), new { id = cariId });
+        }
+
+        var tip = odemeTipi == "Hesap" ? CariErinc.Models.VeresiyeOdemeTipi.Hesap : CariErinc.Models.VeresiyeOdemeTipi.Nakit;
+        var result = await _veresiyeService.AvansEkleAsync(cariId, tutar, aciklama, User.Identity?.Name, tip);
+
+        if (result.IsSuccess)
+            TempBasarili(result.Message);
         else
             TempHata(result.Message);
 

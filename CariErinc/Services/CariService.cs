@@ -42,7 +42,7 @@ public class CariService : ICariService
         };
     }
 
-    public async Task<CariDetayVM?> GetDetayVMAsync(int cariId)
+    public async Task<CariDetayVM?> GetDetayVMAsync(int cariId, DateTime? baslangic = null, DateTime? bitis = null)
     {
         var cari = await _db.Cariler.AsNoTracking().FirstOrDefaultAsync(x => x.Id == cariId);
         if (cari == null) return null;
@@ -72,24 +72,66 @@ public class CariService : ICariService
             .OrderByDescending(x => x.Tarih)
             .ToListAsync();
 
-        var acikVeresiyeler = veresiyeler
-            .Where(v => v.OdenmeDurumu != OdenmeDurumu.Iptal)
-            .Select(v =>
+        // Veresiyeleri Tip'e göre ayır: Borç (SatisBagli/Elden) ve Avans
+        var borclar = veresiyeler
+            .Where(v => v.Tip != VeresiyeTipi.Avans && v.OdenmeDurumu != OdenmeDurumu.Iptal)
+            .Select(v => new CariVeresiyeSatirVM
             {
-                var odenen = v.Odemeler.Sum(o => o.OdemeTutari);
-                var kalan = CalculateVeresiyeKalan(v);
-                return new CariVeresiyeSatirVM
-                {
-                    Id = v.Id,
-                    Tarih = v.Tarih,
-                    Tutar = v.Tutar,
-                    OdenenTutar = odenen,
-                    KalanBorc = kalan,
-                    Durum = v.OdenmeDurumu.ToString()
-                };
+                Id = v.Id,
+                Tarih = v.Tarih,
+                Tutar = v.Tutar,
+                OdenenTutar = v.Odemeler.Sum(o => o.OdemeTutari),
+                KalanBorc = CalculateVeresiyeKalan(v),
+                Durum = v.OdenmeDurumu.ToString(),
+                Tip = "Borc"
             })
             .Where(x => x.KalanBorc > 0)
             .ToList();
+
+        var avanslar = veresiyeler
+            .Where(v => v.Tip == VeresiyeTipi.Avans && v.OdenmeDurumu != OdenmeDurumu.Iptal)
+            .Select(v => new CariVeresiyeSatirVM
+            {
+                Id = v.Id,
+                Tarih = v.Tarih,
+                Tutar = v.Tutar,
+                OdenenTutar = v.Odemeler.Sum(o => o.OdemeTutari),
+                KalanBorc = CalculateVeresiyeKalan(v),
+                Durum = v.OdenmeDurumu.ToString(),
+                Tip = "Avans"
+            })
+            .ToList();
+
+        // Tüm tahsilatları (borç ödemeleri + avans yatırmaları) tek listede
+        var odemeler = veresiyeler
+            .SelectMany(v => v.Odemeler.Select(o => new CariOdemeSatirVM
+            {
+                Id = o.Id,
+                Tarih = o.OdemeTarihi,
+                Tutar = o.OdemeTutari,
+                KullaniciId = o.KullaniciId,
+                OdemeTipi = o.OdemeTipi.ToString(),
+                Aciklama = o.Aciklama,
+                VeresiyeId = v.Id,
+                VeresiyeTip = v.Tip.ToString()
+            }))
+            .OrderByDescending(o => o.Tarih)
+            .ToList();
+
+        // Kümülatif özet (tarihe göre filtrelenebilir)
+        // Borç ödemeleri ve avans kullanımları tarihe göre filtrelenir (VeresiyeOdeme.OdemeTarihi)
+        // Avans yatırmaları tarihe göre filtrelenir (Veresiye.Tarih — avans oluşturulma anı)
+        bool TarihGecerliOdemeler(CariOdemeSatirVM o) =>
+            (!baslangic.HasValue || o.Tarih >= baslangic.Value.Date) &&
+            (!bitis.HasValue || o.Tarih < bitis.Value.Date.AddDays(1));
+
+        bool TarihGecerliAvans(CariVeresiyeSatirVM a) =>
+            (!baslangic.HasValue || a.Tarih >= baslangic.Value.Date) &&
+            (!bitis.HasValue || a.Tarih < bitis.Value.Date.AddDays(1));
+
+        var toplamBorcOdemesi = odemeler.Where(o => o.VeresiyeTip != VeresiyeTipi.Avans.ToString() && TarihGecerliOdemeler(o)).Sum(o => o.Tutar);
+        var toplamAvansYatirma = avanslar.Where(TarihGecerliAvans).Sum(x => x.Tutar);
+        var toplamAvansKullanimi = odemeler.Where(o => o.VeresiyeTip == VeresiyeTipi.Avans.ToString() && TarihGecerliOdemeler(o)).Sum(o => o.Tutar);
 
         var acikVadeliAlislar = alislar
             .Where(a => a.OdemeTipi == AlisOdemeTipi.Vadeli)
@@ -118,15 +160,23 @@ public class CariService : ICariService
             RolEtiketi = BuildRolEtiketi(cari.Rol),
             MusteriId = musteri?.Id,
             TedarikciId = tedarikci?.Id,
-            AlacakToplam = acikVeresiyeler.Sum(x => x.KalanBorc),
+            AlacakToplam = borclar.Sum(x => x.KalanBorc),
+            AvansToplam = avanslar.Sum(x => x.KalanBorc),
             VerecekToplam = acikVadeliAlislar.Sum(x => x.KalanBorc),
             ToplamSatisSayisi = satislar.Count,
             ToplamSatisTutari = satislar.Sum(x => x.ToplamTutar),
             ToplamAlisSayisi = alislar.Count,
             ToplamAlisTutari = alislar.Sum(x => x.ToplamTutar),
-            ToplamOdenenVeresiye = veresiyeler.SelectMany(x => x.Odemeler).Sum(o => o.OdemeTutari),
+            ToplamOdenenVeresiye = odemeler.Where(o => o.VeresiyeTip != VeresiyeTipi.Avans.ToString() && TarihGecerliOdemeler(o)).Sum(o => o.Tutar),
             ToplamOdenenAlis = alislar.Sum(x => x.OdenenTutar),
-            AcikVeresiyeler = acikVeresiyeler,
+            ToplamBorcOdemesi = toplamBorcOdemesi,
+            ToplamAvansYatirma = toplamAvansYatirma,
+            ToplamAvansKullanimi = toplamAvansKullanimi,
+            Baslangic = baslangic,
+            Bitis = bitis,
+            Borclar = borclar,
+            Avanslar = avanslar,
+            Odemeler = odemeler,
             AcikVadeliAlislar = acikVadeliAlislar,
             Hareketler = new List<CariHareketSatirVM>()
         };
@@ -195,11 +245,13 @@ public class CariService : ICariService
 
         foreach (var v in veresiyeler.Where(x => x.OdenmeDurumu != OdenmeDurumu.Iptal && x.SatisId == null))
         {
+            var islemTipi = v.Tip == VeresiyeTipi.Avans ? "Avans" : "Veresiye (borç)";
+            var taraf = v.Tip == VeresiyeTipi.Avans ? "Avans" : "Alacak";
             rows.Add(new CariEkstreSatirVM
             {
                 Tarih = v.Tarih,
-                Taraf = "Alacak",
-                IslemTipi = "Veresiye (borç)",
+                Taraf = taraf,
+                IslemTipi = islemTipi,
                 Tutar = v.Tutar,
                 Aciklama = v.Aciklama,
                 Kaynak = "Veresiye",
@@ -425,7 +477,22 @@ public class CariService : ICariService
             .Where(v => v.OdenmeDurumu != OdenmeDurumu.Iptal)
             .ToListAsync();
 
+        // Borç (Tip != Avans) ve Avans (Tip == Avans) ayrı map'lere
         var alacakMap = veresiyeKalemleri
+            .Where(v => v.Tip != VeresiyeTipi.Avans)
+            .Select(v =>
+            {
+                var hedefCariId = v.CariId ?? (musteriIdMap.TryGetValue(v.MusteriId, out var mappedCariId) ? mappedCariId : (int?)null);
+                return new { Kalem = v, HedefCariId = hedefCariId };
+            })
+            .Where(x => x.HedefCariId.HasValue)
+            .GroupBy(x => x.HedefCariId!.Value)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Sum(x => CalculateVeresiyeKalan(x.Kalem)));
+
+        var avansMap = veresiyeKalemleri
+            .Where(v => v.Tip == VeresiyeTipi.Avans)
             .Select(v =>
             {
                 var hedefCariId = v.CariId ?? (musteriIdMap.TryGetValue(v.MusteriId, out var mappedCariId) ? mappedCariId : (int?)null);
@@ -464,6 +531,7 @@ public class CariService : ICariService
                 Telefon = c.Telefon,
                 Alacak = alacakMap.TryGetValue(c.Id, out var alacak) ? alacak : 0,
                 Verecek = verecekMap.TryGetValue(c.Id, out var verecek) ? verecek : 0,
+                Avans = avansMap.TryGetValue(c.Id, out var avans) ? avans : 0,
                 RolEtiketi = BuildRolEtiketi(c.Rol)
             })
             .OrderBy(x => x.Ad)
@@ -480,6 +548,9 @@ public class CariService : ICariService
             .Where(v => v.OdenmeDurumu != OdenmeDurumu.Iptal)
             .ToListAsync();
 
+        var acikAvanslar = acikVeresiyeler.Where(v => v.Tip == VeresiyeTipi.Avans).ToList();
+        var acikBorclar = acikVeresiyeler.Where(v => v.Tip != VeresiyeTipi.Avans).ToList();
+
         var acikVadeliAlislar = await _db.Alislar
             .AsNoTracking()
             .Where(a => a.OdemeTipi == AlisOdemeTipi.Vadeli)
@@ -489,7 +560,9 @@ public class CariService : ICariService
         {
             CariToplamAlacak = tumSatirlar.Sum(x => x.Alacak),
             CariToplamVerecek = tumSatirlar.Sum(x => x.Verecek),
-            AcikVeresiyeToplam = acikVeresiyeler.Sum(CalculateVeresiyeKalan),
+            CariToplamAvans = tumSatirlar.Sum(x => x.Avans),
+            AcikVeresiyeToplam = acikBorclar.Sum(CalculateVeresiyeKalan),
+            AcikAvansToplam = acikAvanslar.Sum(CalculateVeresiyeKalan),
             AcikVadeliAlisToplam = acikVadeliAlislar.Sum(CalculateAlisKalan),
             KasaBakiye = await _db.KasaHareketler.AsNoTracking()
                 .SumAsync(x => x.HareketTipi == KasaHareketTipi.Gelir ? x.Tutar : -x.Tutar)

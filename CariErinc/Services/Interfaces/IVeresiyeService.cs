@@ -13,4 +13,6 @@ public interface IVeresiyeService
     Task<ServiceResult> SilAsync(int id);
     Task<ServiceResult> OdemeAlAsync(int veresiyeId, decimal tutar, string? aciklama, string? kullaniciId = null, VeresiyeOdemeTipi odemeTipi = VeresiyeOdemeTipi.Nakit);
     Task<ServiceResult> KompleKapatAsync(List<int> veresiyeIds, decimal odenenTutar, string? kullaniciId = null, VeresiyeOdemeTipi odemeTipi = VeresiyeOdemeTipi.Nakit);
+    Task<ServiceResult> AvansEkleAsync(int cariId, decimal tutar, string? aciklama, string? kullaniciId = null, VeresiyeOdemeTipi odemeTipi = VeresiyeOdemeTipi.Nakit);
+    Task<AvansDusResult> AvansDusCoreAsync(int cariId, decimal tutar, string? aciklama, string? kullaniciId);
 }
